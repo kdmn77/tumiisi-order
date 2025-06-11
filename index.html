@@ -21,9 +21,14 @@
       border-bottom: 1px solid #ccc;
     }
     .block-svg {
-      width: 60px;
       height: auto;
     }
+    .block20 { width: 20px; }
+    .block30 { width: 30px; }
+    .block40 { width: 40px; }
+    .block50 { width: 50px; }
+    .block60 { width: 60px; }
+
     .kid-image {
       height: 120px;
       margin-right: 10px;
@@ -118,10 +123,12 @@
       blockArea.innerHTML = "";
       inputs.forEach(input => {
         const count = parseInt(input.value) || 0;
+        const id = input.id;
         for (let i = 0; i < count; i++) {
           const img = document.createElement('img');
-          img.src = svgPaths[input.id];
+          img.src = svgPaths[id];
           img.classList.add('block-svg');
+          img.classList.add(id); // e.g. block20, block30...
           blockArea.appendChild(img);
         }
       });
