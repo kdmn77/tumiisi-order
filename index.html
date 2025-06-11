@@ -127,13 +127,39 @@
     };
 
     const colorList = [
-      "#f7ec43", "#f5a623", "#f29e38", "#f65e3b", "#cf3a24",
-      "#f494c4", "#9b59b6", "#8e44ad", "#5dade2", "#34495e",
-      "#3498db", "#2c3e50", "#76d7c4", "#a3e4d7", "#82e0aa",
-      "#27ae60", "#145a32", "#d7ccc8", "#a67c52", "#6e2c00",
-      "#ca6f1e", "#aeb6bf", "#566573", "#f0e5d8", "#f8f9f9",
-      "#ffffff", "#000000", "#a9dfbf", "#aed6f1", "#f5b7b1", "#ec7063", "#82e0aa"
-    ];
+  { name: "01 LEMON", code: "#e6e137" },
+  { name: "02 YELLOW", code: "#f5a623" },
+  { name: "03 MUSTARD", code: "#d68f29" },
+  { name: "04 ORANGE", code: "#f26522" },
+  { name: "05 RED", code: "#cc3333" },
+  { name: "06 PINK", code: "#e87ca2" },
+  { name: "07 VIOLET", code: "#a55c9a" },
+  { name: "08 PURPLE", code: "#8463a3" },
+  { name: "09 LIGHT BLUE", code: "#2c9ab7" },
+  { name: "10 INDIGO", code: "#1e4f91" },
+  { name: "11 BLUE", code: "#005bab" },
+  { name: "12 NAVY", code: "#003468" },
+  { name: "13 MINT BLUE", code: "#71b7ba" },
+  { name: "14 PISTACHIO", code: "#c5e2c2" },
+  { name: "15 LIGHT GREEN", code: "#b3d465" },
+  { name: "16 GRASS GREEN", code: "#729e3a" },
+  { name: "17 DARK GREEN", code: "#4f5e2d" },
+  { name: "18 BEIGE", code: "#c9b29c" },
+  { name: "19 PALE BROWN", code: "#a67c52" },
+  { name: "20 BROWN", code: "#6b4e2e" },
+  { name: "21 CAMEL", code: "#b37333" },
+  { name: "22 MID GREY", code: "#999999" },
+  { name: "23 DARK GREY", code: "#666666" },
+  { name: "24 PEARL WHITE", code: "#e6ddd2" },
+  { name: "25 OFF WHITE", code: "#f2f0eb" },
+  { name: "26 WHITE", code: "#ffffff" },
+  { name: "27 BLACK", code: "#000000" },
+  { name: "28 AQUA", code: "#90d7d6" },
+  { name: "29 SKY", code: "#8dbdd8" },
+  { name: "30 CANDY PINK", code: "#f3a9b5" },
+  { name: "31 ORANGE RED", code: "#e03c31" },
+  { name: "32 LIME", code: "#a6ce39" }
+];
 
     const formArea = document.getElementById("formArea");
     const stacks = [
@@ -166,8 +192,8 @@
       select.name = name;
       colorList.forEach((color, index) => {
         const opt = document.createElement('option');
-        opt.value = color;
-        opt.textContent = `色${index + 1}`;
+        opt.value = color.code;
+        opt.textContent = color.name;
         select.appendChild(opt);
       });
       return select;
