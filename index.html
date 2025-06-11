@@ -11,14 +11,19 @@
       max-width: 600px;
       margin: auto;
     }
-    #blockDisplayArea {
+    #blockContainer {
       display: flex;
       align-items: flex-end;
-      gap: 4px;
-      flex-wrap: wrap;
+      gap: 8px;
       margin-bottom: 2rem;
       min-height: 200px;
       border-bottom: 1px solid #ccc;
+    }
+    .stack {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 2px;
     }
     .block-svg {
       height: auto;
@@ -61,8 +66,9 @@
       input[type="number"] {
         width: 100%;
       }
-      #blockDisplayArea {
-        justify-content: center;
+      #blockContainer {
+        flex-direction: column;
+        align-items: center;
       }
     }
   </style>
@@ -70,9 +76,11 @@
 <body>
   <h1>BIG tumi-isi 注文フォーム</h1>
 
-  <div style="display: flex; align-items: flex-end;">
+  <div id="blockContainer">
     <img src="kids.svg" alt="Kid size" class="kid-image">
-    <div id="blockDisplayArea"></div>
+    <div class="stack" id="stackA"></div>
+    <div class="stack" id="stackB"></div>
+    <div class="stack" id="stackC"></div>
   </div>
 
   <div class="block-row">
@@ -117,10 +125,15 @@
 
     const inputs = document.querySelectorAll('input[type="number"]');
     const totalDisplay = document.getElementById('totalPrice');
-    const blockArea = document.getElementById('blockDisplayArea');
+    const stacks = [
+      document.getElementById('stackA'),
+      document.getElementById('stackB'),
+      document.getElementById('stackC')
+    ];
 
     function updateBlocks() {
-      blockArea.innerHTML = "";
+      stacks.forEach(stack => stack.innerHTML = "");
+      let stackIndex = 0;
       inputs.forEach(input => {
         const count = parseInt(input.value) || 0;
         const id = input.id;
@@ -129,7 +142,8 @@
           img.src = svgPaths[id];
           img.classList.add('block-svg');
           img.classList.add(id); // e.g. block20, block30...
-          blockArea.appendChild(img);
+          stacks[stackIndex % stacks.length].appendChild(img);
+          stackIndex++;
         }
       });
     }
