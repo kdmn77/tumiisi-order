@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_1" data-name="レイヤー_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 144.24 154.53">
+  <!-- Generator: Adobe Illustrator 29.5.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 141)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #fff;
+        stroke: #231815;
+        stroke-miterlimit: 10;
+        stroke-width: 1.54px;
+      }
+    </style>
+  </defs>
+  <polygon class="st0" points=".86 91.48 29.82 133.65 40.1 142.9 69.82 153.65 120.4 105.57 143.35 73.95 109.06 5.76 60.29 .8 18.77 45.38 .86 91.48"/>
+  <polyline class="st0" points="88.11 93.68 60.29 58.87 27.39 36.13 13.05 72.81 .86 91.48"/>
+  <polyline class="st0" points="85.06 122.71 120.4 105.57 108.68 91.48 88.11 93.68 80.11 107.09"/>
+  <polyline class="st0" points="45.82 80.05 60.29 58.87 96.87 8.42 95.33 4.36"/>
+  <line class="st0" x1="96.87" y1="8.42" x2="112.35" y2="12.3"/>
+  <line class="st0" x1="134.85" y1="57.05" x2="108.68" y2="91.48"/>
+  <polyline class="st0" points="13.05 72.81 45.82 80.05 80.11 107.09 85.06 122.71 69.82 153.65"/>
+</svg>
