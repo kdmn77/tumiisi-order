@@ -37,7 +37,6 @@
     }
     .block-svg {
       height: auto;
-      filter: grayscale(1) brightness(1.2);
     }
     .block20 { width: 20px; }
     .block30 { width: 30px; }
@@ -128,12 +127,12 @@
     };
 
     const colorList = [
-      "01 LEMON", "02 YELLOW", "03 MUSTARD", "04 ORANGE", "05 RED",
-      "06 PINK", "07 VIOLET", "08 PURPLE", "09 LIGHT BLUE", "10 INDIGO",
-      "11 BLUE", "12 NAVY", "13 MINT BLUE", "14 PISTACHIO", "15 LIGHT GREEN",
-      "16 GRASS GREEN", "17 DARK GREEN", "18 BEIGE", "19 PALE BROWN", "20 BROWN",
-      "21 CAMEL", "22 MID GREY", "23 DARK GREY", "24 PEARL WHITE", "25 OFF WHITE",
-      "26 WHITE", "27 BLACK", "28 AQUA", "29 SKY", "30 CANDY PINK", "31 ORANGE RED", "32 LIME"
+      "#f7ec43", "#f5a623", "#f29e38", "#f65e3b", "#cf3a24",
+      "#f494c4", "#9b59b6", "#8e44ad", "#5dade2", "#34495e",
+      "#3498db", "#2c3e50", "#76d7c4", "#a3e4d7", "#82e0aa",
+      "#27ae60", "#145a32", "#d7ccc8", "#a67c52", "#6e2c00",
+      "#ca6f1e", "#aeb6bf", "#566573", "#f0e5d8", "#f8f9f9",
+      "#ffffff", "#000000", "#a9dfbf", "#aed6f1", "#f5b7b1", "#ec7063", "#82e0aa"
     ];
 
     const formArea = document.getElementById("formArea");
@@ -165,10 +164,10 @@
     function createColorSelect(name) {
       const select = document.createElement('select');
       select.name = name;
-      colorList.forEach(c => {
+      colorList.forEach((color, index) => {
         const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = c;
+        opt.value = color;
+        opt.textContent = `色${index + 1}`;
         select.appendChild(opt);
       });
       return select;
@@ -190,10 +189,11 @@
       [20, 30, 40, 50, 60].forEach(size => {
         const count = parseInt(document.getElementById(`block${size}`).value) || 0;
         for (let i = 0; i < count; i++) {
+          const color = document.querySelector(`select[name=color${size}_${i}]`)?.value || "#ccc";
           const img = document.createElement('img');
           img.src = svgPaths[`block${size}`];
           img.classList.add('block-svg', `block${size}`);
-          img.style.filter = `hue-rotate(${(size + i * 10) % 360}deg)`;
+          img.style.filter = `drop-shadow(0 0 0 ${color}) brightness(0) saturate(1000%)`;
           stacks[stackIndex % stacks.length].appendChild(img);
           stackIndex++;
         }
