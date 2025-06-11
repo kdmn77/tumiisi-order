@@ -231,15 +231,18 @@
             img.style.maskSize = "contain";
             img.style.backgroundRepeat = "no-repeat";
           };
+          img.onload = () => {
+            img.style.visibility = "visible";
+            img.style.backgroundColor = color;
+            img.style.webkitMaskImage = `url(${img.src})`;
+            img.style.maskImage = `url(${img.src})`;
+            img.style.webkitMaskRepeat = "no-repeat";
+            img.style.maskRepeat = "no-repeat";
+            img.style.webkitMaskSize = "contain";
+            img.style.maskSize = "contain";
+            img.style.backgroundRepeat = "no-repeat";
+          };
           img.src = svgPaths[`block${size}`];
-          img.style.backgroundColor = color;
-          img.style.webkitMaskImage = `url(${img.src})`;
-          img.style.maskImage = `url(${img.src})`;
-          img.style.webkitMaskRepeat = "no-repeat";
-          img.style.maskRepeat = "no-repeat";
-          img.style.webkitMaskSize = "contain";
-          img.style.maskSize = "contain";
-          img.style.backgroundRepeat = "no-repeat";
           const colorName = document.querySelector(`select[name=color${size}_${i}]`)?.selectedOptions[0]?.textContent;
           img.alt = colorName;
           img.title = colorName;
