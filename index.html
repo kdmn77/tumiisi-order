@@ -102,7 +102,7 @@ function calcTotal(){
 function submitOrder(){
   const out={};sizes.forEach(sz=>{const cnt=+document.getElementById(`block${sz}`).value||0;if(cnt)out[`${sz}cm`]=[...document.querySelectorAll(`select[name^=color${sz}_]`)].map(o=>o.textContent);});
   alert('送信内容
-'+JSON.stringify(out,null,2));
+' + JSON.stringify(out, null, 2));
 }
 /* ---------- イベント ---------- */
 sizes.forEach(sz=>{
