@@ -3,27 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIG tumi-isi 注文フォーム</title>
+  <title>注文フォーム</title>
   <style>
     body {
       font-family: sans-serif;
       padding: 1rem;
-      max-width: 600px;
       margin: auto;
+      max-width: 360px;
     }
     #blockContainer {
       display: flex;
       align-items: flex-end;
-      gap: 8px;
-      margin-bottom: 2rem;
-      min-height: 200px;
+      gap: 4px;
+      margin-bottom: 1rem;
       border-bottom: 1px solid #ccc;
+      padding-bottom: 1rem;
+      justify-content: center;
     }
     .stack {
       display: flex;
       flex-direction: column-reverse;
       align-items: center;
-      gap: 2px;
+      gap: 1px;
     }
     .block-svg {
       height: auto;
@@ -35,73 +36,59 @@
     .block60 { width: 60px; }
 
     .kid-image {
-      height: 120px;
-      margin-right: 10px;
+      height: 100px;
+      margin-left: 5px;
     }
     .block-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
     label {
       flex: 1;
+      font-size: 14px;
     }
     input[type="number"] {
-      width: 80px;
+      width: 60px;
       font-size: 1rem;
-      padding: 0.25rem;
+      padding: 0.2rem;
     }
     .total {
       text-align: right;
       font-weight: bold;
-      font-size: 1.2rem;
-      margin-top: 2rem;
-    }
-    @media (max-width: 500px) {
-      .block-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      input[type="number"] {
-        width: 100%;
-      }
-      #blockContainer {
-        flex-direction: column;
-        align-items: center;
-      }
+      font-size: 1rem;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
-  <h1>BIG tumi-isi 注文フォーム</h1>
-
   <div id="blockContainer">
-    <img src="kids.svg" alt="Kid size" class="kid-image">
     <div class="stack" id="stackA"></div>
     <div class="stack" id="stackB"></div>
     <div class="stack" id="stackC"></div>
+    <img src="kids.svg" alt="Kid size" class="kid-image">
   </div>
 
   <div class="block-row">
-    <label for="block20">20cm角（55,000円）</label>
-    <input type="number" id="block20" min="0" value="0">
+    <label for="block20">20cm</label>
+    <input type="number" id="block20" min="0" value="0">個
   </div>
   <div class="block-row">
-    <label for="block30">30cm角（80,000円）</label>
-    <input type="number" id="block30" min="0" value="0">
+    <label for="block30">30cm</label>
+    <input type="number" id="block30" min="0" value="0">個
   </div>
   <div class="block-row">
-    <label for="block40">40cm角（140,000円）</label>
-    <input type="number" id="block40" min="0" value="0">
+    <label for="block40">40cm</label>
+    <input type="number" id="block40" min="0" value="0">個
   </div>
   <div class="block-row">
-    <label for="block50">50cm角（200,000円）</label>
-    <input type="number" id="block50" min="0" value="0">
+    <label for="block50">50cm</label>
+    <input type="number" id="block50" min="0" value="0">個
   </div>
   <div class="block-row">
-    <label for="block60">60cm角（250,000円）</label>
-    <input type="number" id="block60" min="0" value="0">
+    <label for="block60">60cm</label>
+    <input type="number" id="block60" min="0" value="0">個
   </div>
 
   <div class="total">合計金額：<span id="totalPrice">0</span> 円</div>
@@ -141,7 +128,7 @@
           const img = document.createElement('img');
           img.src = svgPaths[id];
           img.classList.add('block-svg');
-          img.classList.add(id); // e.g. block20, block30...
+          img.classList.add(id);
           stacks[stackIndex % stacks.length].appendChild(img);
           stackIndex++;
         }
