@@ -104,9 +104,11 @@ function updateColorSelectors(size){
 }
 
 function updateBlocks(){
+  /* 下から大→小になるようサイズを降順で処理 */
+  const sizeOrder=[60,50,40,30,20];
   stacks.forEach(s=>s.innerHTML='');
   let stackIdx=0;
-  [20,30,40,50,60].forEach(size=>{
+  sizeOrder.forEach(size=>{
     const cnt=parseInt(document.getElementById(`block${size}`).value)||0;
     for(let i=0;i<cnt;i++){
       const sel=document.querySelector(`select[name=color${size}_${i}]`);
@@ -127,6 +129,8 @@ function updateBlocks(){
       stacks[stackIdx%stacks.length].appendChild(img);
       stackIdx++;
     }
+  });
+}
   });
 }
 
