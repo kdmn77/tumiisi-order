@@ -16,7 +16,7 @@
  select{width:100%;font-size:1rem;padding:.55rem;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;box-sizing:border-box}
  .total{font-size:1.25rem;font-weight:700;text-align:right;margin-top:32px}
  button{width:100%;padding:14px;font-size:1rem;background:#007aff;color:#fff;border:none;border-radius:10px;margin-top:20px}
- @media(max-width:480px){#blockContainer{flex-direction:column-reverse;align-items:center}.stack{flex-direction:row;gap:4px}}
+ @media(max-width:480px){#blockContainer{flex-direction:column-reverse;align-items:center}.stack{flex-direction:row}}
 </style>
 </head>
 <body>
@@ -33,16 +33,15 @@
 <button onclick="submitOrder()">注文内容を送信</button>
 
 <script>
-/***** 設定値 *****/
-const sizes=[20,30,40,50,60];            // cm
-const kidPx   =120;                      // kid イラスト高さ(px)
-const kidCm   =140;                      // kid 身長(cm) 想定
-const pxPerCm =kidPx/kidCm;              // 自動スケール ≒0.857 → 60cm ≒51px
+/* ---- 定数 ---- */
+const sizes=[20,30,40,50,60];                 // cm
+const kidPx = 120;   // kid svg 高さ(px)
+const kidCm = 100;   // kid 身長(cm)
+// 実寸感よりやや小さめに見せたいので倍率を 0.9 に補正
+const pxPerCm = (kidPx / kidCm) * 0.9;   // 1cm ≒ 1.08px → 60cm ≒ 65px                    // 1cm→1.2px 60cm→72px
 
 const prices={block20:55000,block30:80000,block40:140000,block50:200000,block60:250000};
-const svgPaths={
-  block20:'block-20cm.svg',block30:'block-30cm.svg',block40:'block-40cm.svg',block50:'block-50cm.svg',block60:'block-60cm.svg'
-};
+const svgPaths={block20:'block-20cm.svg',block30:'block-30cm.svg',block40:'block-40cm.svg',block50:'block-50cm.svg',block60:'block-60cm.svg'};
 const colorList=[
  {n:'01 LEMON',c:'#e6e137'},{n:'02 YELLOW',c:'#f5a623'},{n:'03 MUSTARD',c:'#d68f29'},{n:'04 ORANGE',c:'#f26522'},{n:'05 RED',c:'#cc3333'},
  {n:'06 PINK',c:'#e87ca2'},{n:'07 VIOLET',c:'#a55c9a'},{n:'08 PURPLE',c:'#8463a3'},{n:'09 LIGHT BLUE',c:'#2c9ab7'},{n:'10 INDIGO',c:'#1e4f91'},
@@ -50,21 +49,17 @@ const colorList=[
  {n:'16 GRASS GREEN',c:'#729e3a'},{n:'17 DARK GREEN',c:'#4f5e2d'},{n:'18 BEIGE',c:'#c9b29c'},{n:'19 PALE BROWN',c:'#a67c52'},{n:'20 BROWN',c:'#6b4e2e'},
  {n:'21 CAMEL',c:'#b37333'},{n:'22 MID GREY',c:'#999'},{n:'23 DARK GREY',c:'#666'},{n:'24 PEARL WHITE',c:'#e6ddd2'},{n:'25 OFF WHITE',c:'#f2f0eb'},
  {n:'26 WHITE',c:'#ffffff'},{n:'27 BLACK',c:'#000'},{n:'28 AQUA',c:'#90d7d6'},{n:'29 SKY',c:'#8dbdd8'},{n:'30 CANDY PINK',c:'#f3a9b5'},
- {n:'31 ORANGE RED',c:'#e03c31'},{n:'32 LIME',c:'#a6ce39'}
-];
-/***** DOM refs *****/
+ {n:'31 ORANGE RED',c:'#e03c31'},{n:'32 LIME',c:'#a6ce39'}];
+
 const stacks=[...document.querySelectorAll('.stack')];
 const formArea=document.getElementById('formArea');
 
-/* UI生成 */
+/* ---- 入力UI ---- */
 sizes.forEach(sz=>{
   const r=document.createElement('div');r.className='block-row';
-  r.innerHTML=`<label>${sz}cm</label>
-    <select id="block${sz}">${[0,1,2,3,4,5].map(n=>`<option value='${n}'>${n} 個</option>`).join('')}</select>
-    <div id="colorWrap${sz}"></div>`;
+  r.innerHTML=`<label>${sz}cm</label><select id="block${sz}">${[0,1,2,3,4,5].map(n=>`<option value='${n}'>${n} 個</option>`).join('')}</select><div id="colorWrap${sz}"></div>`;
   formArea.appendChild(r);
 });
-
 function makeColorSel(name){
   const s=document.createElement('select');s.name=name;
   colorList.forEach(o=>s.appendChild(Object.assign(document.createElement('option'),{value:o.c,textContent:o.n})));
@@ -73,42 +68,47 @@ function makeColorSel(name){
 }
 function refreshColorSelectors(sz){
   const cnt=+document.getElementById(`block${sz}`).value;
-  const wrap=document.getElementById(`colorWrap${sz}`);
-  wrap.replaceChildren(...Array.from({length:cnt},(_,i)=>makeColorSel(`color${sz}_${i}`)));
+  document.getElementById(`colorWrap${sz}`).replaceChildren(...Array.from({length:cnt},(_,i)=>makeColorSel(`color${sz}_${i}`)));
 }
 
-/* SVG取得キャッシュ */
+/* ---- SVG キャッシュ ---- */
 const svgCache={};
-async function getSVG(path){
-  if(svgCache[path])return svgCache[path];
+async function getInlineSVG(path){
+  if(svgCache[path])return svgCache[path].cloneNode(true);
   const txt=await fetch(path).then(r=>r.text());
-  return svgCache[path]=txt;
+  const el=new DOMParser().parseFromString(txt,'image/svg+xml').documentElement;
+  svgCache[path]=el;return el.cloneNode(true);
 }
 
+/* ---- 描画 ---- */
 async function updateBlocks(){
   stacks.forEach(s=>s.innerHTML='');
   let idx=0;
-  for(const sz of [...sizes].reverse()){           // 大→小
+  for(const sz of [...sizes].reverse()){  // 大→小
     const cnt=+document.getElementById(`block${sz}`).value||0;
     for(let i=0;i<cnt;i++){
       const sel=document.querySelector(`select[name=color${sz}_${i}]`);
-      const color=sel?sel.value:'#ccc'; const name=sel?sel.selectedOptions[0].textContent:'';
-      const raw=await getSVG(svgPaths[`block${sz}`]);
-      const doc=new DOMParser().parseFromString(raw,'image/svg+xml');
-      const el=doc.documentElement;
-      el.setAttribute('width',sz*pxPerCm);
-      el.setAttribute('height',sz*pxPerCm);
-      /* 線を残し面を塗る */
-      el.querySelectorAll('[fill="none"],[fill="#ffffff"],[fill="#fff"]').forEach(n=>n.setAttribute('fill',color));
-      el.title=name;el.classList.add('block');
-      stacks[idx++%stacks.length].appendChild(el);
+      const color=sel?sel.value:'#ccc';
+      const name = sel?sel.selectedOptions[0].textContent:'';
+      /* div + mask で面を塗る */
+      const d=document.createElement('div');
+      const px=sz*pxPerCm;
+      d.style.width  = px+'px';
+      d.style.height = px+'px';
+      d.style.backgroundColor = color;
+      d.style.mask       = `url(${svgPaths[`block${sz}`]}) center/contain no-repeat`;
+      d.style.webkitMask = d.style.mask;
+      d.classList.add('block');
+      d.title=name; d.alt=name;
+      stacks[idx++%stacks.length].appendChild(d);
     }
   }
   calcTotal();
 }
+}
 
 function calcTotal(){
-  const total=sizes.reduce((sum,sz)=>sum+(+document.getElementById(`block${sz}`).value||0)*prices[`block${sz}`],0);
+  const total=sizes.reduce((s,sz)=>s+(+document.getElementById(`block${sz}`).value||0)*prices[`block${sz}`],0);
   document.getElementById('totalPrice').textContent=total.toLocaleString();
 }
 function submitOrder(){
@@ -116,7 +116,6 @@ function submitOrder(){
   alert('送信内容\n'+JSON.stringify(order,null,2));
 }
 
-/* 各セレクトイベント */
 sizes.forEach(sz=>{
   document.getElementById(`block${sz}`).addEventListener('change',()=>{refreshColorSelectors(sz);updateBlocks();});
 });
