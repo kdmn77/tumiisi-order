@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>注文フォーム</title>
   <style>
     body {
@@ -18,7 +18,9 @@
       margin-bottom: 1rem;
       border-bottom: 1px solid #ccc;
       padding-bottom: 1rem;
-      justify-content: center;
+      justify-content: flex-start;
+      height: 200px;
+      overflow: hidden;
     }
     .stack {
       display: flex;
@@ -36,23 +38,29 @@
     .block60 { width: 60px; }
 
     .kid-image {
-      height: 100px;
-      margin-left: 5px;
+      height: 100%;
+      margin-right: 10px;
     }
     .block-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 0.5rem;
+      gap: 4px;
     }
     label {
       flex: 1;
       font-size: 14px;
     }
-    input[type="number"] {
-      width: 60px;
+    input[type="number"], select {
       font-size: 1rem;
       padding: 0.2rem;
+    }
+    input[type="number"] {
+      width: 50px;
+    }
+    select {
+      flex: 1;
     }
     .total {
       text-align: right;
@@ -64,31 +72,36 @@
 </head>
 <body>
   <div id="blockContainer">
+    <img src="kids.svg" alt="Kid size" class="kid-image" />
     <div class="stack" id="stackA"></div>
     <div class="stack" id="stackB"></div>
     <div class="stack" id="stackC"></div>
-    <img src="kids.svg" alt="Kid size" class="kid-image">
   </div>
 
   <div class="block-row">
     <label for="block20">20cm</label>
-    <input type="number" id="block20" min="0" value="0">個
+    <input type="number" id="block20" min="0" value="0" />個
+    <select id="color20"></select>
   </div>
   <div class="block-row">
     <label for="block30">30cm</label>
-    <input type="number" id="block30" min="0" value="0">個
+    <input type="number" id="block30" min="0" value="0" />個
+    <select id="color30"></select>
   </div>
   <div class="block-row">
     <label for="block40">40cm</label>
-    <input type="number" id="block40" min="0" value="0">個
+    <input type="number" id="block40" min="0" value="0" />個
+    <select id="color40"></select>
   </div>
   <div class="block-row">
     <label for="block50">50cm</label>
-    <input type="number" id="block50" min="0" value="0">個
+    <input type="number" id="block50" min="0" value="0" />個
+    <select id="color50"></select>
   </div>
   <div class="block-row">
     <label for="block60">60cm</label>
-    <input type="number" id="block60" min="0" value="0">個
+    <input type="number" id="block60" min="0" value="0" />個
+    <select id="color60"></select>
   </div>
 
   <div class="total">合計金額：<span id="totalPrice">0</span> 円</div>
@@ -99,7 +112,7 @@
       block30: 80000,
       block40: 140000,
       block50: 200000,
-      block60: 250000
+      block60: 250000,
     };
 
     const svgPaths = {
@@ -107,28 +120,49 @@
       block30: "block-30cm.svg",
       block40: "block-40cm.svg",
       block50: "block-50cm.svg",
-      block60: "block-60cm.svg"
+      block60: "block-60cm.svg",
     };
 
+    const colorList = [
+      "01 LEMON", "02 YELLOW", "03 MUSTARD", "04 ORANGE", "05 RED",
+      "06 PINK", "07 VIOLET", "08 PURPLE", "09 LIGHT BLUE", "10 INDIGO",
+      "11 BLUE", "12 NAVY", "13 MINT BLUE", "14 PISTACHIO", "15 LIGHT GREEN",
+      "16 GRASS GREEN", "17 DARK GREEN", "18 BEIGE", "19 PALE BROWN", "20 BROWN",
+      "21 CAMEL", "22 MID GREY", "23 DARK GREY", "24 PEARL WHITE", "25 OFF WHITE",
+      "26 WHITE", "27 BLACK", "28 AQUA", "29 SKY", "30 CANDY PINK", "31 ORANGE RED", "32 LIME"
+    ];
+
+    // カラーセレクトを各行に挿入
+    [20, 30, 40, 50, 60].forEach(size => {
+      const select = document.getElementById(`color${size}`);
+      colorList.forEach(color => {
+        const option = document.createElement("option");
+        option.value = color;
+        option.textContent = color;
+        select.appendChild(option);
+      });
+    });
+
     const inputs = document.querySelectorAll('input[type="number"]');
-    const totalDisplay = document.getElementById('totalPrice');
+    const totalDisplay = document.getElementById("totalPrice");
     const stacks = [
-      document.getElementById('stackA'),
-      document.getElementById('stackB'),
-      document.getElementById('stackC')
+      document.getElementById("stackA"),
+      document.getElementById("stackB"),
+      document.getElementById("stackC"),
     ];
 
     function updateBlocks() {
-      stacks.forEach(stack => stack.innerHTML = "");
+      stacks.forEach((stack) => (stack.innerHTML = ""));
       let stackIndex = 0;
-      inputs.forEach(input => {
+      inputs.forEach((input) => {
         const count = parseInt(input.value) || 0;
         const id = input.id;
+        const color = document.getElementById("color" + id.replace("block", "")).value;
         for (let i = 0; i < count; i++) {
-          const img = document.createElement('img');
+          const img = document.createElement("img");
           img.src = svgPaths[id];
-          img.classList.add('block-svg');
-          img.classList.add(id);
+          img.classList.add("block-svg", id);
+          img.title = color;
           stacks[stackIndex % stacks.length].appendChild(img);
           stackIndex++;
         }
@@ -137,17 +171,21 @@
 
     function calculateTotal() {
       let total = 0;
-      inputs.forEach(input => {
+      inputs.forEach((input) => {
         total += (parseInt(input.value) || 0) * prices[input.id];
       });
       totalDisplay.textContent = total.toLocaleString();
     }
 
-    inputs.forEach(input => {
-      input.addEventListener('input', () => {
+    inputs.forEach((input) => {
+      input.addEventListener("input", () => {
         calculateTotal();
         updateBlocks();
       });
+    });
+
+    document.querySelectorAll("select").forEach((select) => {
+      select.addEventListener("change", updateBlocks);
     });
   </script>
 </body>
