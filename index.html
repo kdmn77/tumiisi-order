@@ -10,6 +10,7 @@
  #blockContainer{display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #d0d0d0;padding-bottom:20px;margin-bottom:24px;flex-wrap:wrap;min-height:200px}
  .kid-image{height:120px;margin-right:8px;flex:0 0 auto}
  .stack{display:flex;flex-direction:column-reverse;align-items:center;gap:6px}
+ svg.block{flex:0 0 auto}
  .block-row{margin-bottom:20px}
  .block-row label{font-weight:600;margin-bottom:6px;display:block}
  select{width:100%;font-size:1rem;padding:.55rem;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;box-sizing:border-box}
@@ -33,15 +34,14 @@
 <button onclick="submitOrder()">注文内容を送信</button>
 
 <script>
-/* ---- 設定 ---- */
+/* --- 設定 --- */
 const sizes=[20,30,40,50,60];
-const kidPx=120, kidCm=100, pxPerCm=kidPx/kidCm*0.9;   // kid 比率 (60cm≈65px)
+const kidPx=120,kidCm=100,pxPerCm=kidPx/kidCm*0.9;   // kid 比率
 const prices={block20:55000,block30:80000,block40:140000,block50:200000,block60:250000};
 const svgPaths={
   block20:'block-20cm.svg',block30:'block-30cm.svg',
   block40:'block-40cm.svg',block50:'block-50cm.svg',block60:'block-60cm.svg'};
-const colorList=[
- {n:'01 LEMON',c:'#e6e137'},{n:'02 YELLOW',c:'#f5a623'},{n:'03 MUSTARD',c:'#d68f29'},
+const colorList=[{n:'01 LEMON',c:'#e6e137'},{n:'02 YELLOW',c:'#f5a623'},{n:'03 MUSTARD',c:'#d68f29'},
  {n:'04 ORANGE',c:'#f26522'},{n:'05 RED',c:'#cc3333'},{n:'06 PINK',c:'#e87ca2'},
  {n:'07 VIOLET',c:'#a55c9a'},{n:'08 PURPLE',c:'#8463a3'},{n:'09 LIGHT BLUE',c:'#2c9ab7'},
  {n:'10 INDIGO',c:'#1e4f91'},{n:'11 BLUE',c:'#005bab'},{n:'12 NAVY',c:'#003468'},
@@ -51,14 +51,13 @@ const colorList=[
  {n:'22 MID GREY',c:'#999'},{n:'23 DARK GREY',c:'#666'},{n:'24 PEARL WHITE',c:'#e6ddd2'},
  {n:'25 OFF WHITE',c:'#f2f0eb'},{n:'26 WHITE',c:'#ffffff'},{n:'27 BLACK',c:'#000'},
  {n:'28 AQUA',c:'#90d7d6'},{n:'29 SKY',c:'#8dbdd8'},{n:'30 CANDY PINK',c:'#f3a9b5'},
- {n:'31 ORANGE RED',c:'#e03c31'},{n:'32 LIME',c:'#a6ce39'}
-];
+ {n:'31 ORANGE RED',c:'#e03c31'},{n:'32 LIME',c:'#a6ce39'}];
 
-/* ---- DOM refs ---- */
+/* --- DOM refs --- */
 const stacks=[...document.querySelectorAll('.stack')];
 const formArea=document.getElementById('formArea');
 
-/* ---- UI生成 ---- */
+/* --- UI 生成 --- */
 sizes.forEach(sz=>{
   const row=document.createElement('div');row.className='block-row';
   row.innerHTML=`<label>${sz}cm</label>
@@ -78,34 +77,33 @@ function refreshColorSel(sz){
   wrap.replaceChildren(...Array.from({length:cnt},(_,i)=>createColorSel(`color${sz}_${i}`)));
 }
 
-/* ---- 描画 ---- */
+/* --- 描画 --- */
 function updateBlocks(){
-  stacks.forEach(s=>s.innerHTML='');
-  let idx=0;
+  stacks.forEach(s=>s.innerHTML=''); let idx=0;
   [...sizes].reverse().forEach(sz=>{
     const cnt=+document.getElementById(`block${sz}`).value||0;
-    const px=sz*pxPerCm;
+    const px = sz*pxPerCm;
     for(let i=0;i<cnt;i++){
       const sel=document.querySelector(`select[name=color${sz}_${i}]`);
-      const color=sel?sel.value:'#ccc',title=sel?sel.selectedOptions[0].textContent:'';
+      const color=sel?sel.value:'#ccc', title=sel?sel.selectedOptions[0].textContent:'';
       const div=document.createElement('div');
-      div.style.cssText=`width:${px}px;height:${px}px;background:${color};mask:url(${svgPaths[\`block${sz}\`]} ) center/contain no-repeat;-webkit-mask:url(${svgPaths[\`block${sz}\`]} ) center/contain no-repeat;`;
+      div.style.cssText=`width:${px}px;height:${px}px;background:${color};mask:url(${svgPaths[`block${sz}`]}) center/contain no-repeat;-webkit-mask:url(${svgPaths[`block${sz}`]}) center/contain no-repeat;`;
       div.title=title;stacks[idx++%stacks.length].appendChild(div);
     }
   });
   calcTotal();
 }
 function calcTotal(){
-  const total=sizes.reduce((sum,s)=>sum+(+document.getElementById(\`block${s}\`).value||0)*prices[\`block${s}\`],0);
+  const total=sizes.reduce((sum,s)=>sum+(+document.getElementById(`block${s}`).value||0)*prices[`block${s}`],0);
   document.getElementById('totalPrice').textContent=total.toLocaleString();
 }
 function submitOrder(){
-  const out={};sizes.forEach(s=>{const cnt=+document.getElementById(\`block${s}\`).value||0;if(cnt){out[\`\${s}cm\`]=[...document.querySelectorAll(\`select[name^=color${s}_]\`)].map(o=>o.textContent);}});
+  const out={};sizes.forEach(s=>{const cnt=+document.getElementById(`block${s}`).value||0;if(cnt){out[`${s}cm`]=[...document.querySelectorAll(`select[name^=color${s}_]`)].map(o=>o.textContent);}});
   alert('送信内容\\n'+JSON.stringify(out,null,2));
 }
-/* ---- 初期化 ---- */
+/* --- 初期化/イベント --- */
 sizes.forEach(sz=>{
-  document.getElementById(\`block${sz}\`).addEventListener('change',()=>{refreshColorSel(sz);updateBlocks();});
+  document.getElementById(`block${sz}`).addEventListener('change',()=>{refreshColorSel(sz);updateBlocks();});
   refreshColorSel(sz);
 });
 updateBlocks();
