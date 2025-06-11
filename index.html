@@ -219,7 +219,17 @@
           const img = document.createElement('img');
           img.src = svgPaths[`block${size}`];
           img.classList.add('block-svg', `block${size}`);
-          img.style.filter = `drop-shadow(0 0 0 ${color}) brightness(0) saturate(1000%)`;
+          img.style.backgroundColor = color;
+          img.style.webkitMaskImage = `url(${img.src})`;
+          img.style.maskImage = `url(${img.src})`;
+          img.style.webkitMaskRepeat = "no-repeat";
+          img.style.maskRepeat = "no-repeat";
+          img.style.webkitMaskSize = "contain";
+          img.style.maskSize = "contain";
+          img.style.backgroundRepeat = "no-repeat";
+          img.src = "";
+          const colorName = document.querySelector(`select[name=color${size}_${i}]`)?.selectedOptions[0]?.textContent;
+          img.title = colorName;
           stacks[stackIndex % stacks.length].appendChild(img);
           stackIndex++;
         }
