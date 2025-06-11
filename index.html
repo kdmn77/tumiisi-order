@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>BIG tumi‑isi 注文フォーム</title>
 <style>
- body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:420px;padding:2rem;background:#fafafa;color:#333}
+ body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:420px;padding:2rem;background:#fafafa;color:#333}
  h1{font-size:1.6rem;margin:0 0 1rem}
  #blockContainer{display:flex;align-items:flex-end;gap:6px;height:160px;overflow:hidden;border-bottom:1px solid #ccc;padding-bottom:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
  .kid-image{height:80px;margin-right:6px}
  .stack{display:flex;flex-direction:column-reverse;align-items:center;gap:2px}
- .block-svg{height:auto;background-repeat:no-repeat}
- .block20{width:20px}.block30{width:30px}.block40{width:40px}.block50{width:50px}.block60{width:60px}
- .block-row{margin-bottom:1rem}
- .block-row label{display:block;font-weight:600;margin-bottom:.3rem}
- select,input{width:100%;font-size:1rem;padding:.45rem;border:1px solid #ccc;border-radius:6px;margin-bottom:.4rem}
- .color-list{margin-top:.4rem}
  .total{margin-top:2rem;font-weight:bold;font-size:1.2rem;text-align:right}
+ .block-row{margin-bottom:1rem}
+ .block-row label{font-weight:600;margin-bottom:.3rem;display:block}
+ select,input{width:100%;font-size:1rem;padding:.45rem;border:1px solid #ccc;border-radius:6px;margin-bottom:.4rem}
  button{width:100%;padding:.75rem;font-size:1rem;background:#007aff;color:#fff;border:none;border-radius:8px;margin-top:1rem}
  @media(max-width:480px){#blockContainer{flex-direction:column-reverse;align-items:center;height:auto}.stack{flex-direction:row;gap:4px}}
 </style>
@@ -24,7 +21,7 @@
 <body>
 <h1>BIG tumi‑isi 注文</h1>
 <div id="blockContainer">
-  <img src="kids.svg" class="kid-image" alt="kid"/>
+  <img class="kid-image" src="kids.svg" alt="kid" />
   <div class="stack" id="stackA"></div>
   <div class="stack" id="stackB"></div>
   <div class="stack" id="stackC"></div>
@@ -34,84 +31,76 @@
 <button onclick="submitOrder()">注文内容を送信</button>
 
 <script>
-/* ───────── 定数設定 ───────── */
+/***** 定数 *****/
+const sizes=[20,30,40,50,60];
 const prices={block20:55000,block30:80000,block40:140000,block50:200000,block60:250000};
 const svgPaths={
-  block20:"block-20cm.svg",block30:"block-30cm.svg",block40:"block-40cm.svg",block50:"block-50cm.svg",block60:"block-60cm.svg"
+  block20:'block-20cm.svg',block30:'block-30cm.svg',block40:'block-40cm.svg',block50:'block-50cm.svg',block60:'block-60cm.svg'
 };
 const colorList=[
-  {n:"01 LEMON",c:"#e6e137"},{n:"02 YELLOW",c:"#f5a623"},{n:"03 MUSTARD",c:"#d68f29"},{n:"04 ORANGE",c:"#f26522"},{n:"05 RED",c:"#cc3333"},
-  {n:"06 PINK",c:"#e87ca2"},{n:"07 VIOLET",c:"#a55c9a"},{n:"08 PURPLE",c:"#8463a3"},{n:"09 LIGHT BLUE",c:"#2c9ab7"},{n:"10 INDIGO",c:"#1e4f91"},
-  {n:"11 BLUE",c:"#005bab"},{n:"12 NAVY",c:"#003468"},{n:"13 MINT BLUE",c:"#71b7ba"},{n:"14 PISTACHIO",c:"#c5e2c2"},{n:"15 LIGHT GREEN",c:"#b3d465"},
-  {n:"16 GRASS GREEN",c:"#729e3a"},{n:"17 DARK GREEN",c:"#4f5e2d"},{n:"18 BEIGE",c:"#c9b29c"},{n:"19 PALE BROWN",c:"#a67c52"},{n:"20 BROWN",c:"#6b4e2e"},
-  {n:"21 CAMEL",c:"#b37333"},{n:"22 MID GREY",c:"#999"},{n:"23 DARK GREY",c:"#666"},{n:"24 PEARL WHITE",c:"#e6ddd2"},{n:"25 OFF WHITE",c:"#f2f0eb"},
-  {n:"26 WHITE",c:"#ffffff"},{n:"27 BLACK",c:"#000"},{n:"28 AQUA",c:"#90d7d6"},{n:"29 SKY",c:"#8dbdd8"},{n:"30 CANDY PINK",c:"#f3a9b5"},
-  {n:"31 ORANGE RED",c:"#e03c31"},{n:"32 LIME",c:"#a6ce39"}
+  {n:'01 LEMON',c:'#e6e137'},{n:'02 YELLOW',c:'#f5a623'},{n:'03 MUSTARD',c:'#d68f29'},{n:'04 ORANGE',c:'#f26522'},{n:'05 RED',c:'#cc3333'},
+  {n:'06 PINK',c:'#e87ca2'},{n:'07 VIOLET',c:'#a55c9a'},{n:'08 PURPLE',c:'#8463a3'},{n:'09 LIGHT BLUE',c:'#2c9ab7'},{n:'10 INDIGO',c:'#1e4f91'},
+  {n:'11 BLUE',c:'#005bab'},{n:'12 NAVY',c:'#003468'},{n:'13 MINT BLUE',c:'#71b7ba'},{n:'14 PISTACHIO',c:'#c5e2c2'},{n:'15 LIGHT GREEN',c:'#b3d465'},
+  {n:'16 GRASS GREEN',c:'#729e3a'},{n:'17 DARK GREEN',c:'#4f5e2d'},{n:'18 BEIGE',c:'#c9b29c'},{n:'19 PALE BROWN',c:'#a67c52'},{n:'20 BROWN',c:'#6b4e2e'},
+  {n:'21 CAMEL',c:'#b37333'},{n:'22 MID GREY',c:'#999'},{n:'23 DARK GREY',c:'#666'},{n:'24 PEARL WHITE',c:'#e6ddd2'},{n:'25 OFF WHITE',c:'#f2f0eb'},
+  {n:'26 WHITE',c:'#fff'},{n:'27 BLACK',c:'#000'},{n:'28 AQUA',c:'#90d7d6'},{n:'29 SKY',c:'#8dbdd8'},{n:'30 CANDY PINK',c:'#f3a9b5'},
+  {n:'31 ORANGE RED',c:'#e03c31'},{n:'32 LIME',c:'#a6ce39'}
 ];
 const stacks=[...document.querySelectorAll('.stack')];
 const formArea=document.getElementById('formArea');
 
-/* ───────── 入力UI生成 ───────── */
-[20,30,40,50,60].forEach(size=>{
+/***** UI 生成 *****/
+sizes.forEach(sz=>{
   const row=document.createElement('div');row.className='block-row';
-  row.innerHTML=`<label>${size}cm</label>
-    <select id="block${size}">${[0,1,2,3,4,5].map(n=>`<option value="${n}">${n} 個</option>`).join('')}</select>
-    <div id="colorWrap${size}" class="color-list"></div>`;
+  row.innerHTML=`<label>${sz}cm</label>
+    <select id="block${sz}">${[0,1,2,3,4,5].map(n=>`<option value="${n}">${n} 個</option>`).join('')}</select>
+    <div id="colorWrap${sz}" class="color-list"></div>`;
   formArea.appendChild(row);
 });
 
 function makeColorSelect(name){
   const sel=document.createElement('select');sel.name=name;
-  colorList.forEach(o=>{const op=document.createElement('option');op.value=o.c;op.textContent=o.n;sel.appendChild(op);});
+  colorList.forEach(o=>{sel.appendChild(Object.assign(document.createElement('option'),{value:o.c,textContent:o.n}));});
   sel.addEventListener('change',()=>{updateBlocks();});
   return sel;
 }
-
-function refreshSelectors(size){
-  const cnt=+document.getElementById(`block${size}`).value;
-  const wrap=document.getElementById(`colorWrap${size}`);
-  wrap.replaceChildren(...Array.from({length:cnt},(_,i)=>makeColorSelect(`color${size}_${i}`)));
+function refreshSelectors(sz){
+  const cnt=+document.getElementById(`block${sz}`).value;
+  const wrap=document.getElementById(`colorWrap${sz}`);
+  wrap.replaceChildren(...Array.from({length:cnt},(_,i)=>makeColorSelect(`color${sz}_${i}`)));
 }
 
-/* ───────── 描画 ───────── */
+/***** 描画処理 *****/
 async function updateBlocks(){
   stacks.forEach(s=>s.innerHTML='');
-  const order=[60,50,40,30,20];
   let idx=0;
-  for(const size of order){
-    const cnt=+document.getElementById(`block${size}`).value||0;
+  for(const sz of [...sizes].reverse()){              // 大きい順
+    const cnt=+document.getElementById(`block${sz}`).value||0;
     for(let i=0;i<cnt;i++){
-      const sel=document.querySelector(`select[name=color${size}_${i}]`);
-      const colorCode=sel?sel.value:'#ccc';
-      const colorName=sel?sel.selectedOptions[0].textContent:'';
-      const svgText=await fetch(svgPaths[`block${size}`]).then(r=>r.text());
-      const svgDoc=new DOMParser().parseFromString(svgText,'image/svg+xml');
-      const svgEl=svgDoc.documentElement;
-      svgEl.setAttribute('width',`${size/2}px`);
-      svgEl.querySelectorAll('[fill="none"]').forEach(el=>el.setAttribute('fill',colorCode));
-      svgEl.title=colorName;
-      stacks[idx++%stacks.length].appendChild(svgEl);
+      const sel=document.querySelector(`select[name=color${sz}_${i}]`);
+      const c=sel?sel.value:'#ccc'; const cname=sel?sel.selectedOptions[0].textContent:'';
+      const svgTxt=await fetch(svgPaths[`block${sz}`]).then(r=>r.text());
+      const svgDoc=new DOMParser().parseFromString(svgTxt,'image/svg+xml');
+      const el=svgDoc.documentElement;
+      el.setAttribute('width',`${sz/2}px`);
+      el.querySelectorAll('[fill="none"],[fill="#ffffff"]').forEach(p=>p.setAttribute('fill',c));
+      el.title=cname; stacks[idx++%stacks.length].appendChild(el);
     }
   }
 }
-  });
-}
 
 function calcTotal(){
-  const total=[20,30,40,50,60].reduce((s,sz)=>s+(+document.getElementById(`block${sz}`).value||0)*prices[`block${sz}`],0);
-  document.getElementById('totalPrice').textContent=total.toLocaleString();
+  const t=sizes.reduce((s,sz)=>s+(+document.getElementById(`block${sz}`).value||0)*prices[`block${sz}`],0);
+  document.getElementById('totalPrice').textContent=t.toLocaleString();
 }
-
 function submitOrder(){
-  const order={};
-  [20,30,40,50,60].forEach(sz=>{
-    const cnt=+document.getElementById(`block${sz}`).value||0;
-    if(cnt){order[`${sz}cm`]=[...document.querySelectorAll(`select[name^=color${sz}_]`)].map(s=>s.textContent);} });
-  alert('送信内容\n'+JSON.stringify(order,null,2));
+  const o={};sizes.forEach(sz=>{const cnt=+document.getElementById(`block${sz}`).value||0;
+    if(cnt) o[`${sz}cm`]=[...document.querySelectorAll(`select[name^=color${sz}_]`)].map(s=>s.textContent);});
+  alert('送信内容\n'+JSON.stringify(o,null,2));
 }
 
-/* ───────── イベント結合 ───────── */
-[20,30,40,50,60].forEach(sz=>{
+/***** イベント *****/
+sizes.forEach(sz=>{
   document.getElementById(`block${sz}`).addEventListener('change',()=>{refreshSelectors(sz);updateBlocks();calcTotal();});
 });
 </script>
