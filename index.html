@@ -1,40 +1,44 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>BIG tumi‑isi オーダー</title>
+<title>BIG tumi‑isi 注文</title>
 <style>
- body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:440px;padding:24px;background:#fafafa;color:#333;-webkit-font-smoothing:antialiased}
- h1{font-size:1.7rem;margin:0 0 20px;font-weight:700}
- #blockContainer{display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #d0d0d0;padding-bottom:20px;margin-bottom:24px;flex-wrap:wrap;min-height:180px}
- .kid-image{height:96px;margin-right:8px;flex:0 0 auto}
- .stack{display:flex;flex-direction:column-reverse;align-items:center;gap:6px;flex:0 0 auto}
- .block{background-repeat:no-repeat;background-size:contain;background-position:center center;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask-position:center;display:inline-block}
+ body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:440px;padding:24px;background:#fafafa;color:#333}
+ h1{font-size:1.7rem;font-weight:700;margin:0 0 20px}
+ #blockContainer{display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #d0d0d0;padding-bottom:20px;margin-bottom:24px;flex-wrap:wrap;min-height:200px}
+ .kid-image{height:120px;margin-right:8px;flex:0 0 auto}
+ .stack{display:flex;flex-direction:column-reverse;align-items:center;gap:6px}
+ svg.block{flex:0 0 auto}
  .block-row{margin-bottom:20px}
  .block-row label{font-weight:600;margin-bottom:6px;display:block}
- select,input{width:100%;font-size:1rem;padding:.5rem;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;box-sizing:border-box}
+ select{width:100%;font-size:1rem;padding:.55rem;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;box-sizing:border-box}
  .total{font-size:1.25rem;font-weight:700;text-align:right;margin-top:32px}
  button{width:100%;padding:14px;font-size:1rem;background:#007aff;color:#fff;border:none;border-radius:10px;margin-top:20px}
- @media(max-width:480px){#blockContainer{flex-direction:column-reverse;align-items:center}.stack{flex-direction:row}}
+ @media(max-width:480px){#blockContainer{flex-direction:column-reverse;align-items:center}.stack{flex-direction:row;gap:4px}}
 </style>
 </head>
 <body>
 <h1>BIG tumi‑isi 注文</h1>
 <div id="blockContainer">
-  <img src="kids.svg" class="kid-image" alt="kid"/>
+  <img src="kids.svg" alt="kid" class="kid-image" />
   <div class="stack" id="stackA"></div>
   <div class="stack" id="stackB"></div>
   <div class="stack" id="stackC"></div>
 </div>
+
 <div id="formArea"></div>
 <div class="total">合計金額：<span id="totalPrice">0</span> 円</div>
 <button onclick="submitOrder()">注文内容を送信</button>
 
 <script>
-/***** 定数 *****/
-const sizes=[20,30,40,50,60];                // cm
-const pxPerCm=2.5;                           // 表示倍率 → 60cm=150px
+/***** 設定値 *****/
+const sizes=[20,30,40,50,60];            // cm
+const kidPx   =120;                      // kid イラスト高さ(px)
+const kidCm   =140;                      // kid 身長(cm) 想定
+const pxPerCm =kidPx/kidCm;              // 自動スケール ≒0.857 → 60cm ≒51px
+
 const prices={block20:55000,block30:80000,block40:140000,block50:200000,block60:250000};
 const svgPaths={
   block20:'block-20cm.svg',block30:'block-30cm.svg',block40:'block-40cm.svg',block50:'block-50cm.svg',block60:'block-60cm.svg'
@@ -48,50 +52,58 @@ const colorList=[
  {n:'26 WHITE',c:'#ffffff'},{n:'27 BLACK',c:'#000'},{n:'28 AQUA',c:'#90d7d6'},{n:'29 SKY',c:'#8dbdd8'},{n:'30 CANDY PINK',c:'#f3a9b5'},
  {n:'31 ORANGE RED',c:'#e03c31'},{n:'32 LIME',c:'#a6ce39'}
 ];
-/***** DOM *****/
+/***** DOM refs *****/
 const stacks=[...document.querySelectorAll('.stack')];
 const formArea=document.getElementById('formArea');
-/* 入力 UI 生成 */
+
+/* UI生成 */
 sizes.forEach(sz=>{
-  const row=document.createElement('div');row.className='block-row';
-  row.innerHTML=`<label>${sz}cm</label>
-    <select id="block${sz}">${[0,1,2,3,4,5].map(n=>`<option value="${n}">${n} 個</option>`).join('')}</select>
-    <div id="colorWrap${sz}" class="color-list"></div>`;
-  formArea.appendChild(row);
+  const r=document.createElement('div');r.className='block-row';
+  r.innerHTML=`<label>${sz}cm</label>
+    <select id="block${sz}">${[0,1,2,3,4,5].map(n=>`<option value='${n}'>${n} 個</option>`).join('')}</select>
+    <div id="colorWrap${sz}"></div>`;
+  formArea.appendChild(r);
 });
 
-function makeColorSelect(name){
-  const sel=document.createElement('select');sel.name=name;
-  colorList.forEach(o=>sel.appendChild(Object.assign(document.createElement('option'),{value:o.c,textContent:o.n})));
-  sel.addEventListener('change',()=>{updateBlocks()});
-  return sel;
+function makeColorSel(name){
+  const s=document.createElement('select');s.name=name;
+  colorList.forEach(o=>s.appendChild(Object.assign(document.createElement('option'),{value:o.c,textContent:o.n})));
+  s.addEventListener('change',updateBlocks);
+  return s;
 }
-function refreshSelectors(sz){
+function refreshColorSelectors(sz){
   const cnt=+document.getElementById(`block${sz}`).value;
   const wrap=document.getElementById(`colorWrap${sz}`);
-  wrap.replaceChildren(...Array.from({length:cnt},(_,i)=>makeColorSelect(`color${sz}_${i}`)));
+  wrap.replaceChildren(...Array.from({length:cnt},(_,i)=>makeColorSel(`color${sz}_${i}`)));
 }
 
-/* 描画 */
-function updateBlocks(){
+/* SVG取得キャッシュ */
+const svgCache={};
+async function getSVG(path){
+  if(svgCache[path])return svgCache[path];
+  const txt=await fetch(path).then(r=>r.text());
+  return svgCache[path]=txt;
+}
+
+async function updateBlocks(){
   stacks.forEach(s=>s.innerHTML='');
   let idx=0;
-  [...sizes].reverse().forEach(sz=>{           // 大 → 小
+  for(const sz of [...sizes].reverse()){           // 大→小
     const cnt=+document.getElementById(`block${sz}`).value||0;
-    const w=sz*pxPerCm;
     for(let i=0;i<cnt;i++){
       const sel=document.querySelector(`select[name=color${sz}_${i}]`);
-      const c=sel?sel.value:'#ccc'; const name=sel?sel.selectedOptions[0].textContent:'';
-      const div=document.createElement('div');
-      div.className=`block block${sz}`;
-      div.style.width=w+'px';div.style.height=w+'px';          // 正方形枠比率
-      div.style.backgroundColor=c;
-      div.style.mask=`url(${svgPaths[`block${sz}`]}) center/contain no-repeat`;
-      div.style.webkitMask=div.style.mask;
-      div.title=name;
-      stacks[idx++%stacks.length].appendChild(div);
+      const color=sel?sel.value:'#ccc'; const name=sel?sel.selectedOptions[0].textContent:'';
+      const raw=await getSVG(svgPaths[`block${sz}`]);
+      const doc=new DOMParser().parseFromString(raw,'image/svg+xml');
+      const el=doc.documentElement;
+      el.setAttribute('width',sz*pxPerCm);
+      el.setAttribute('height',sz*pxPerCm);
+      /* 線を残し面を塗る */
+      el.querySelectorAll('[fill="none"],[fill="#ffffff"],[fill="#fff"]').forEach(n=>n.setAttribute('fill',color));
+      el.title=name;el.classList.add('block');
+      stacks[idx++%stacks.length].appendChild(el);
     }
-  });
+  }
   calcTotal();
 }
 
@@ -100,12 +112,13 @@ function calcTotal(){
   document.getElementById('totalPrice').textContent=total.toLocaleString();
 }
 function submitOrder(){
-  const order={}; sizes.forEach(sz=>{const cnt=+document.getElementById(`block${sz}`).value||0;if(cnt){order[`${sz}cm`]=[...document.querySelectorAll(`select[name^=color${sz}_]`)].map(o=>o.textContent);} });
+  const order={};sizes.forEach(sz=>{const cnt=+document.getElementById(`block${sz}`).value||0;if(cnt){order[`${sz}cm`]=[...document.querySelectorAll(`select[name^=color${sz}_]`)].map(o=>o.textContent);} });
   alert('送信内容\n'+JSON.stringify(order,null,2));
 }
-/* イベント */
+
+/* 各セレクトイベント */
 sizes.forEach(sz=>{
-  document.getElementById(`block${sz}`).addEventListener('change',()=>{refreshSelectors(sz);updateBlocks();});
+  document.getElementById(`block${sz}`).addEventListener('change',()=>{refreshColorSelectors(sz);updateBlocks();});
 });
 </script>
 </body>
