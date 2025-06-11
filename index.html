@@ -1,33 +1,43 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>注文フォーム</title>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 1rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 2rem;
       margin: auto;
-      max-width: 360px;
+      max-width: 420px;
+      background-color: #fafafa;
+      color: #333;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
     }
     #blockContainer {
       display: flex;
       align-items: flex-end;
-      gap: 4px;
-      margin-bottom: 1rem;
+      gap: 6px;
+      margin-bottom: 1.5rem;
       border-bottom: 1px solid #ccc;
       padding-bottom: 1rem;
-      justify-content: center;
+      justify-content: flex-start;
+      height: 160px;
+      overflow: hidden;
+      flex-wrap: wrap;
     }
     .stack {
       display: flex;
       flex-direction: column-reverse;
       align-items: center;
-      gap: 1px;
+      gap: 2px;
     }
     .block-svg {
       height: auto;
+      filter: grayscale(1) brightness(1.2);
     }
     .block20 { width: 20px; }
     .block30 { width: 30px; }
@@ -36,62 +46,69 @@
     .block60 { width: 60px; }
 
     .kid-image {
-      height: 100px;
-      margin-left: 5px;
+      height: 80px;
+      margin-right: 6px;
     }
     .block-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
+      margin-bottom: 1rem;
     }
-    label {
-      flex: 1;
-      font-size: 14px;
+    .block-row label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
     }
-    input[type="number"] {
-      width: 60px;
+    select, input {
       font-size: 1rem;
-      padding: 0.2rem;
+      padding: 0.4rem;
+      width: 100%;
+      margin-bottom: 0.4rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .color-list {
+      margin-top: 0.5rem;
     }
     .total {
       text-align: right;
       font-weight: bold;
+      font-size: 1.2rem;
+      margin-top: 2rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
       font-size: 1rem;
+      background-color: #007aff;
+      color: white;
+      border: none;
+      border-radius: 8px;
       margin-top: 1rem;
+    }
+    @media (max-width: 480px) {
+      #blockContainer {
+        flex-direction: column-reverse;
+        align-items: center;
+        height: auto;
+      }
+      .stack {
+        flex-direction: row;
+        gap: 4px;
+      }
     }
   </style>
 </head>
 <body>
+  <h1>BIG tumi-isi 注文</h1>
   <div id="blockContainer">
+    <img src="kids.svg" alt="Kid size" class="kid-image" />
     <div class="stack" id="stackA"></div>
     <div class="stack" id="stackB"></div>
     <div class="stack" id="stackC"></div>
-    <img src="kids.svg" alt="Kid size" class="kid-image">
   </div>
 
-  <div class="block-row">
-    <label for="block20">20cm</label>
-    <input type="number" id="block20" min="0" value="0">個
-  </div>
-  <div class="block-row">
-    <label for="block30">30cm</label>
-    <input type="number" id="block30" min="0" value="0">個
-  </div>
-  <div class="block-row">
-    <label for="block40">40cm</label>
-    <input type="number" id="block40" min="0" value="0">個
-  </div>
-  <div class="block-row">
-    <label for="block50">50cm</label>
-    <input type="number" id="block50" min="0" value="0">個
-  </div>
-  <div class="block-row">
-    <label for="block60">60cm</label>
-    <input type="number" id="block60" min="0" value="0">個
-  </div>
-
+  <div id="formArea"></div>
   <div class="total">合計金額：<span id="totalPrice">0</span> 円</div>
+  <button onclick="submitOrder()">注文内容を送信</button>
 
   <script>
     const prices = {
@@ -110,25 +127,73 @@
       block60: "block-60cm.svg"
     };
 
-    const inputs = document.querySelectorAll('input[type="number"]');
-    const totalDisplay = document.getElementById('totalPrice');
-    const stacks = [
-      document.getElementById('stackA'),
-      document.getElementById('stackB'),
-      document.getElementById('stackC')
+    const colorList = [
+      "01 LEMON", "02 YELLOW", "03 MUSTARD", "04 ORANGE", "05 RED",
+      "06 PINK", "07 VIOLET", "08 PURPLE", "09 LIGHT BLUE", "10 INDIGO",
+      "11 BLUE", "12 NAVY", "13 MINT BLUE", "14 PISTACHIO", "15 LIGHT GREEN",
+      "16 GRASS GREEN", "17 DARK GREEN", "18 BEIGE", "19 PALE BROWN", "20 BROWN",
+      "21 CAMEL", "22 MID GREY", "23 DARK GREY", "24 PEARL WHITE", "25 OFF WHITE",
+      "26 WHITE", "27 BLACK", "28 AQUA", "29 SKY", "30 CANDY PINK", "31 ORANGE RED", "32 LIME"
     ];
+
+    const formArea = document.getElementById("formArea");
+    const stacks = [
+      document.getElementById("stackA"),
+      document.getElementById("stackB"),
+      document.getElementById("stackC")
+    ];
+
+    [20, 30, 40, 50, 60].forEach(size => {
+      const id = `block${size}`;
+      const blockRow = document.createElement('div');
+      blockRow.className = 'block-row';
+      blockRow.innerHTML = `
+        <label for="${id}">${size}cm</label>
+        <select id="${id}" data-size="${size}">
+          <option value="0">0 個</option>
+          <option value="1">1 個</option>
+          <option value="2">2 個</option>
+          <option value="3">3 個</option>
+          <option value="4">4 個</option>
+          <option value="5">5 個</option>
+        </select>
+        <div class="color-list" id="colorWrap${size}"></div>
+      `;
+      formArea.appendChild(blockRow);
+    });
+
+    function createColorSelect(name) {
+      const select = document.createElement('select');
+      select.name = name;
+      colorList.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        select.appendChild(opt);
+      });
+      return select;
+    }
+
+    function updateColorSelectors(size) {
+      const count = parseInt(document.getElementById(`block${size}`).value);
+      const wrap = document.getElementById(`colorWrap${size}`);
+      wrap.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const sel = createColorSelect(`color${size}_${i}`);
+        wrap.appendChild(sel);
+      }
+    }
 
     function updateBlocks() {
       stacks.forEach(stack => stack.innerHTML = "");
       let stackIndex = 0;
-      inputs.forEach(input => {
-        const count = parseInt(input.value) || 0;
-        const id = input.id;
+      [20, 30, 40, 50, 60].forEach(size => {
+        const count = parseInt(document.getElementById(`block${size}`).value) || 0;
         for (let i = 0; i < count; i++) {
           const img = document.createElement('img');
-          img.src = svgPaths[id];
-          img.classList.add('block-svg');
-          img.classList.add(id);
+          img.src = svgPaths[`block${size}`];
+          img.classList.add('block-svg', `block${size}`);
+          img.style.filter = `hue-rotate(${(size + i * 10) % 360}deg)`;
           stacks[stackIndex % stacks.length].appendChild(img);
           stackIndex++;
         }
@@ -137,16 +202,35 @@
 
     function calculateTotal() {
       let total = 0;
-      inputs.forEach(input => {
-        total += (parseInt(input.value) || 0) * prices[input.id];
+      [20, 30, 40, 50, 60].forEach(size => {
+        const count = parseInt(document.getElementById(`block${size}`).value) || 0;
+        total += count * prices[`block${size}`];
       });
-      totalDisplay.textContent = total.toLocaleString();
+      document.getElementById('totalPrice').textContent = total.toLocaleString();
     }
 
-    inputs.forEach(input => {
-      input.addEventListener('input', () => {
-        calculateTotal();
+    function submitOrder() {
+      const order = {};
+      [20, 30, 40, 50, 60].forEach(size => {
+        const count = parseInt(document.getElementById(`block${size}`).value);
+        if (count > 0) {
+          const colors = [];
+          for (let i = 0; i < count; i++) {
+            const color = document.querySelector(`select[name=color${size}_${i}]`).value;
+            colors.push(color);
+          }
+          order[size + "cm"] = colors;
+        }
+      });
+      alert("送信されました\n\n" + JSON.stringify(order, null, 2));
+    }
+
+    [20, 30, 40, 50, 60].forEach(size => {
+      const select = document.getElementById(`block${size}`);
+      select.addEventListener('change', () => {
+        updateColorSelectors(size);
         updateBlocks();
+        calculateTotal();
       });
     });
   </script>
