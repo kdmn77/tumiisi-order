@@ -74,25 +74,26 @@ function refreshSelectors(size){
 }
 
 /* ───────── 描画 ───────── */
-function updateBlocks(){
+async function updateBlocks(){
   stacks.forEach(s=>s.innerHTML='');
   const order=[60,50,40,30,20];
   let idx=0;
-  order.forEach(size=>{
+  for(const size of order){
     const cnt=+document.getElementById(`block${size}`).value||0;
     for(let i=0;i<cnt;i++){
       const sel=document.querySelector(`select[name=color${size}_${i}]`);
-      const color=sel?sel.value:'#ccc'; const cname=sel?sel.selectedOptions[0].textContent:'';
-      const img=new Image();img.className=`block-svg block${size}`;img.alt=img.title=cname;img.style.visibility='hidden';
-      img.onload=()=>{
-        img.style.mask=`url(${img.src}) center/contain no-repeat`;
-        img.style.webkitMask=`url(${img.src}) center/contain no-repeat`;
-        img.style.backgroundColor=color;
-        img.style.visibility='visible';
-      };
-      img.src=svgPaths[`block${size}`];
-      stacks[idx++%stacks.length].appendChild(img);
+      const colorCode=sel?sel.value:'#ccc';
+      const colorName=sel?sel.selectedOptions[0].textContent:'';
+      const svgText=await fetch(svgPaths[`block${size}`]).then(r=>r.text());
+      const svgDoc=new DOMParser().parseFromString(svgText,'image/svg+xml');
+      const svgEl=svgDoc.documentElement;
+      svgEl.setAttribute('width',`${size/2}px`);
+      svgEl.querySelectorAll('[fill="none"]').forEach(el=>el.setAttribute('fill',colorCode));
+      svgEl.title=colorName;
+      stacks[idx++%stacks.length].appendChild(svgEl);
     }
+  }
+}
   });
 }
 
