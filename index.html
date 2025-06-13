@@ -3,133 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BIG tumi-isi 注文</title>
+<title>BIG tumi‑isi × Matter.js</title>
 <style>
- body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:440px;padding:24px;background:#fafafa;color:#333}
- h1{font-size:1.7rem;font-weight:700;margin:0 0 20px}
- #blockContainer{display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #d0d0d0;padding-bottom:20px;margin-bottom:24px;flex-wrap:wrap;min-height:200px}
- .kid-image{height:120px;margin-right:8px;flex:0 0 auto}
- .stack{display:flex;flex-direction:column-reverse;align-items:center;gap:6px}
- .block-row{margin-bottom:20px}
- .block-row label{font-weight:600;margin-bottom:6px;display:block}
- select{width:100%;font-size:1rem;padding:.55rem;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;box-sizing:border-box}
- .total{font-size:1.25rem;font-weight:700;text-align:right;margin-top:32px}
- button{width:100%;padding:14px;font-size:1rem;background:#007aff;color:#fff;border:none;border-radius:10px;margin-top:20px}
- @media(max-width:480px){#blockContainer{flex-direction:column-reverse;align-items:center}.stack{flex-direction:row}}
+ body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:460px;padding:24px;background:#fafafa;color:#333}
+ h1{font-size:1.6rem;font-weight:700;margin:0 0 16px}
+ #simArea{border:1px solid #ccc;border-radius:8px;margin-bottom:16px;width:100%;height:320px;position:relative;overflow:hidden}
+ canvas{display:block}
+ .controls{margin-bottom:16px}
+ label{font-weight:600;display:block;margin:8px 0 4px}
+ select,button{width:100%;padding:.55rem;font-size:1rem;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
+ button{background:#007aff;color:#fff;margin-top:12px;border:none}
 </style>
 </head>
 <body>
-<h1>BIG tumi-isi 注文</h1>
-
-<div id="blockContainer">
-  <img src="kids.svg" alt="kid" class="kid-image">
-  <div class="stack" id="stackA"></div>
-  <div class="stack" id="stackB"></div>
-  <div class="stack" id="stackC"></div>
+<h1>BIG tumi‑isi ドロップ</h1>
+<div id="simArea"></div>
+<div class="controls">
+ <label>サイズ</label>
+ <select id="sizeSel">
+   <option value="20">20cm</option>
+   <option value="30">30cm</option>
+   <option value="40">40cm</option>
+   <option value="50">50cm</option>
+   <option value="60">60cm</option>
+ </select>
+ <label>色</label>
+ <select id="colorSel"></select>
+ <button id="dropBtn">ブロックを落とす</button>
 </div>
 
-<div id="formArea"></div>
-<div class="total">合計金額：<span id="totalPrice">0</span> 円</div>
-<button onclick="submitOrder()">注文内容を送信</button>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
-/* ========= 基本設定 ========= */
-const sizes=[20,30,40,50,60];
-const kidPx=120,kidCm=100,pxPerCm=kidPx/kidCm*0.9;      // 60 cm ≈ 65 px
-const prices={block20:55000,block30:80000,block40:140000,block50:200000,block60:250000};
-const svgPaths={
-  block20:'block-20cm.svg',block30:'block-30cm.svg',
-  block40:'block-40cm.svg',block50:'block-50cm.svg',block60:'block-60cm.svg'};
-const colorList=[                                 // 32 色
- ['01 LEMON','#e6e137'],['02 YELLOW','#f5a623'],['03 MUSTARD','#d68f29'],['04 ORANGE','#f26522'],
- ['05 RED','#cc3333'],['06 PINK','#e87ca2'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],
- ['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['12 NAVY','#003468'],
- ['13 MINT BLUE','#71b7ba'],['14 PISTACHIO','#c5e2c2'],['15 LIGHT GREEN','#b3d465'],['16 GRASS GREEN','#729e3a'],
- ['17 DARK GREEN','#4f5e2d'],['18 BEIGE','#c9b29c'],['19 PALE BROWN','#a67c52'],['20 BROWN','#6b4e2e'],
- ['21 CAMEL','#b37333'],['22 MID GREY','#999'],['23 DARK GREY','#666'],['24 PEARL WHITE','#e6ddd2'],
- ['25 OFF WHITE','#f2f0eb'],['26 WHITE','#ffffff'],['27 BLACK','#000'],
- ['28 AQUA','#90d7d6'],['29 SKY','#8dbdd8'],['30 CANDY PINK','#f3a9b5'],['31 ORANGE RED','#e03c31'],['32 LIME','#a6ce39']
+/***** 色リスト *****/
+const colors=[
+  ['01 LEMON','#e6e137'],['02 YELLOW','#f5a623'],['03 MUSTARD','#d68f29'],['04 ORANGE','#f26522'],
+  ['05 RED','#cc3333'],['06 PINK','#e87ca2'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],
+  ['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['12 NAVY','#003468']
 ];
+const colorSel=document.getElementById('colorSel');
+colors.forEach(([n,c])=>colorSel.add(new Option(n,c)));
 
-/* ========= DOM 参照 ========= */
-const stacks=[...document.querySelectorAll('.stack')];
-const formArea=document.getElementById('formArea');
+/***** Matter.js セットアップ *****/
+const Engine=Matter.Engine,Render=Matter.Render,World=Matter.World,Bodies=Matter.Bodies,Runner=Matter.Runner;
+const W=430,H=300;
+const engine=Engine.create();
+const render=Render.create({element:document.getElementById('simArea'),engine:engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
+Render.run(render);
+Runner.run(Runner.create(),engine);
 
-/* ========= カラーセレクト生成 ========= */
-function makeColorSelect(name){
-  const sel=document.createElement('select');sel.name=name;
-  colorList.forEach(([n,c])=>sel.add(new Option(n,c)));
-  sel.addEventListener('change',updateBlocks);
-  return sel;
-}
-function refreshColorSelectors(size){
-  const n=+document.getElementById(`block${size}`).value;
-  const wrap=document.getElementById(`colorWrap${size}`);
-  wrap.replaceChildren(...Array.from({length:n},(_,i)=>makeColorSelect(`color${size}_${i}`)));
-}
+/* 床 */
+World.add(engine.world,[
+  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true})
+]);
 
-/* ========= UI 生成 ========= */
-sizes.forEach(size=>{
-  const row=document.createElement('div');row.className='block-row';
-  row.innerHTML=`<label>${size}cm</label>
-    <select id="block${size}">${[0,1,2,3,4,5].map(v=>`<option value="${v}">${v} 個</option>`).join('')}</select>
-    <div id="colorWrap${size}"></div>`;
-  formArea.appendChild(row);
-  document.getElementById(`block${size}`).addEventListener('change',()=>{refreshColorSelectors(size);updateBlocks();});
-  refreshColorSelectors(size);
-});
-
-/* ========= ブロック描画 ========= */
-async function updateBlocks(){
-  stacks.forEach(s=>s.innerHTML='');
-  let idx=0;
-  for(const size of [...sizes].reverse()){
-    const count=+document.getElementById(`block${size}`).value||0;
-    const px=size*pxPerCm;
-    for(let i=0;i<count;i++){
-      const sel=document.querySelector(`select[name=color${size}_${i}]`);
-      const fillColor=sel?sel.value:'#ccc', title=sel?sel.selectedOptions[0].textContent:'';
-      try{
-        const svgText=await fetch(svgPaths[`block${size}`]).then(r=>r.text());
-        const svgDoc=new DOMParser().parseFromString(svgText,'image/svg+xml');
-        const svgEl=svgDoc.documentElement;
-        svgEl.setAttribute('width',px);svgEl.setAttribute('height',px);
-        svgEl.querySelectorAll('path,polygon,rect,polyline,circle,ellipse').forEach(el=>{
-          const f=(el.getAttribute('fill')||'').toLowerCase();
-          if(!f||f==='none'||f==='#fff'||f==='#ffffff'||f==='white') el.setAttribute('fill',fillColor);
-          el.setAttribute('stroke','#000');el.setAttribute('stroke-width','1');
-        });
-        svgEl.classList.add('block');svgEl.title=title;
-        stacks[idx++%stacks.length].appendChild(svgEl);
-      }catch(e){
-        /* 万一 fetch 失敗した場合の Fallback：線画だけ表示 */
-        const img=document.createElement('img');
-        img.src=svgPaths[`block${size}`];img.alt='';img.title=title;
-        img.style.width=px+'px';img.style.height=px+'px';stacks[idx++%stacks.length].appendChild(img);
-      }
-    }
-  }
-  calcTotal();
-}
-
-/* ========= 合計金額計算 ========= */
-function calcTotal(){
-  const total=sizes.reduce((s,z)=>s+(+document.getElementById(`block${z}`).value||0)*prices[`block${z}`],0);
-  document.getElementById('totalPrice').textContent=total.toLocaleString();
-}
-
-/* ========= 送信ダミー ========= */
-function submitOrder(){
-  const out={};
-  sizes.forEach(sz=>{
-    const cnt=+document.getElementById(`block${sz}`).value||0;
-    if(cnt){out[`${sz}cm`]=[...document.querySelectorAll(`select[name^=color${sz}_]`)].map(o=>o.textContent);}
-  });
-  alert('送信内容\\n'+JSON.stringify(out,null,2));
-}
-
-/* ========= 初期描画 ========= */
-updateBlocks();
+/***** ドロップ処理 *****/
+const dropBtn=document.getElementById('dropBtn');
+const sizeSel=document.getElementById('sizeSel');
+dropBtn.onclick=()=>{
+  const sz=+sizeSel.value;
+  const col=colorSel.value;
+  const radius=sz*0.5; // 簡易的に円に見立て
+  const body=Bodies.circle(Math.random()*(W-2*radius)+radius,-40,radius,{restitution:0.4,render:{fillStyle:col,strokeStyle:'#000',lineWidth:1}});
+  World.add(engine.world,body);
+};
 </script>
 </body>
 </html>
