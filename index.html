@@ -10,10 +10,13 @@
  #simArea{border-radius:8px;margin-bottom:16px;width:100%;height:360px;position:relative;overflow:hidden}
  #simCanvas{display:block}
  #kid{position:absolute;left:12px;bottom:0;height:120px;pointer-events:none}
- .controls{margin-bottom:16px}
- label{font-weight:600;display:block;margin:8px 0 4px}
+ label{font-weight:600}
  select,button{width:100%;padding:.55rem;font-size:1rem;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
  button{background:#007aff;color:#fff;margin-top:12px;border:none}
+ #controlHeader{position:sticky;top:0;background:#fafafa;z-index:10;padding-bottom:8px}
+ #controlWrap{max-height:220px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:8px}
+ .size-section{margin-bottom:16px}
+ .size-section span{display:block;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -22,85 +25,81 @@
   <img src="kids.svg" id="kid" alt="kid">
   <canvas id="simCanvas"></canvas>
 </div>
-<div id="controlHeader" style="position:sticky;top:0;background:#fafafa;z-index:10;padding-bottom:8px;">
- <label style="font-weight:600">ブロックを落とす</label>
- <button id="dropBtn" style="width:100%;padding:.55rem;font-size:1rem;border:none;background:#007aff;color:#fff;border-radius:8px;">ブロックを落とす</button>
+<div id="controlHeader">
+  <button id="dropBtn">ブロックを落とす</button>
 </div>
-<div id="controlWrap" style="max-height:220px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:8px;">
-  <!-- サイズごとに行生成 -->
-</div>
+<div id="controlWrap"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
-/***** 色リスト *****/
+/***** 定数 *****/
+const sizes=[20,30,40,50,60];
 const colors=[
- ['01 LEMON','#e6e137'],['02 YELLOW','#f5a623'],['03 MUSTARD','#d68f29'],['04 ORANGE','#f26522'],
- ['05 RED','#cc3333'],['06 PINK','#e87ca2'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],
- ['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['12 NAVY','#003468']
+  ['01 LEMON','#e6e137'],['02 YELLOW','#f5a623'],['03 MUSTARD','#d68f29'],['04 ORANGE','#f26522'],
+  ['05 RED','#cc3333'],['06 PINK','#e87ca2'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],
+  ['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['12 NAVY','#003468']
 ];
-// パレット行を生成
-const controlWrap=document.getElementById('controlWrap');
+
+/***** UI 生成 *****/
+const wrap=document.getElementById('controlWrap');
+function createColorSelect(){
+  const sel=document.createElement('select');
+  colors.forEach(([n,c])=>sel.add(new Option(n,c)));
+  return sel;
+}
+function refreshColors(sz){
+  const cnt=+document.getElementById('cnt'+sz).value;
+  const area=document.getElementById('colorWrap'+sz);
+  area.innerHTML='';
+  for(let i=0;i<cnt;i++) area.appendChild(createColorSelect());
+}
 sizes.forEach(sz=>{
-  const row=document.createElement('div');row.style.display='flex';row.style.alignItems='center';row.style.marginBottom='8px';
-  row.innerHTML=`<span style="flex:0 0 80px">${sz}cm角</span>`;
-  const sel=document.createElement('select');sel.style.flex='1';colors.forEach(([n,c])=>sel.add(new Option(n,c)));
-  sel.dataset.size=sz;
-  row.appendChild(sel);
-  controlWrap.appendChild(row);
-});(([n,c])=>colorSel.add(new Option(n,c)));
+  const sec=document.createElement('div');sec.className='size-section';
+  sec.innerHTML=`<span>${sz}cm角</span>`;
+  const cntSel=document.createElement('select');cntSel.id='cnt'+sz;
+  [0,1,2,3,4,5].forEach(n=>cntSel.add(new Option(`${n} 個`,n)));
+  cntSel.addEventListener('change',()=>refreshColors(sz));
+  sec.appendChild(cntSel);
+  const colorArea=document.createElement('div');colorArea.id='colorWrap'+sz;
+  sec.appendChild(colorArea);
+  wrap.appendChild(sec);
+});
 
 /***** Matter.js セットアップ *****/
-const {Engine,Render,World,Bodies,Runner,Body,Vertices} = Matter;
+const {Engine,Render,World,Bodies,Runner,Body,Mouse,MouseConstraint}=Matter;
 const W=430,H=340;
 const engine=Engine.create();
 const render=Render.create({canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
 Render.run(render);
 Runner.run(Runner.create(),engine);
 
-/* 壁と床 */
+// 壁・床
 World.add(engine.world,[
   Bodies.rectangle(W/2,H+20,W,40,{isStatic:true}),
   Bodies.rectangle(-20,H/2,40,H,{isStatic:true}),
   Bodies.rectangle(W+20,H/2,40,H,{isStatic:true})
 ]);
-/* kid バリア */
+// kid バリア
 World.add(engine.world,[Bodies.rectangle(60,H-60,100,140,{isStatic:true,render:{visible:false}})]);
+// ドラッグ
+const mouse=Mouse.create(render.canvas);
+World.add(engine.world,MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}}));
+render.mouse=mouse;
 
-/***** マウスドラッグ有効化 *****/
-const mouse = Matter.Mouse.create(render.canvas);
-const mouseConstraint = Matter.MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}});
-World.add(engine.world,mouseConstraint);
-render.mouse = mouse;
-
-/***** ランダム凸 7 角ポリゴン生成 *****/
-function randomConvexPolygon(cx, cy, avgR, sides){
-  const verts=[];
-  const n=sides;
-  const angleStep=(Math.PI*2)/n;
-  let angle=Math.random()*angleStep;
-  for(let i=0;i<n;i++){
-    const r=avgR*(0.8+Math.random()*0.4);
-    verts.push({x:cx+r*Math.cos(angle), y:cy+r*Math.sin(angle)});
-    angle+=angleStep;
-  }
-  return verts;
-}
+/***** ランダム凸ポリ *****/
+function randPoly(cx,cy,r,n){const verts=[];const step=2*Math.PI/n;let a=Math.random()*step;for(let i=0;i<n;i++){const m=r*(0.8+Math.random()*0.4);verts.push({x:cx+m*Math.cos(a),y:cy+m*Math.sin(a)});a+=step;}return verts;}
 
 /***** ドロップ *****/
-const dropBtn=document.getElementById('dropBtn');
-// 旧 sizeSel 削除
-dropBtn.onclick=()=>{
-  // 最初に選択された行を取得
-  const sel=[...controlWrap.querySelectorAll('select')].find(s=>s.value);
-  if(!sel)return alert('色を選択してください');
-  const size=+sel.dataset.size;
-  const color=sel.value;
+document.getElementById('dropBtn').onclick=()=>{
+  const row=[...wrap.querySelectorAll('.size-section')].find(r=>+r.querySelector('select').value>0&&r.querySelector('select+div select'));
+  if(!row) return alert('数量と色を選択してください');
+  const size=parseInt(row.querySelector('span').textContent);
+  const color=row.querySelector('select+div select').value;
   const radius=size*0.5;
-  const xStart=200+Math.random()*60; // さらに狭い幅
-  const yStart=-80;
+  const x=210+Math.random()*40; // 落下幅さらに狭く
+  const y=-80;
   const sides=Math.random()<0.5?7:9;
-  const verts=randomConvexPolygon(0,0,radius,sides);
-  const body=Bodies.fromVertices(xStart,yStart,[verts],{restitution:0,friction:1,frictionStatic:1,frictionAir:0.02,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
+  const body=Bodies.fromVertices(x,y,[randPoly(0,0,radius,sides)],{restitution:0,friction:1,frictionStatic:1,frictionAir:0.02,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
   Body.rotate(body,Math.random()*Math.PI);
   World.add(engine.world,body);
 };
