@@ -97,7 +97,7 @@ dropBtn.onclick=()=>{
   const sides = Math.random()<0.5 ? 7 : 9; // 50% 7角 または 9角
   const verts = randomConvexPolygon(0,0,radius,sides);
   const body=Bodies.fromVertices(xStart,yStart,[verts],
-    {restitution:0.15,friction:0.6,frictionStatic:0.9,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
+    {restitution:0,friction:1,frictionStatic:1,frictionAir:0.02,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
   Body.rotate(body,Math.random()*Math.PI);
   World.add(engine.world,body);
 };
