@@ -64,6 +64,12 @@ World.add(engine.world,[
 /* kid バリア */
 World.add(engine.world,[Bodies.rectangle(60,H-60,100,140,{isStatic:true,render:{visible:false}})]);
 
+/***** マウスドラッグ有効化 *****/
+const mouse = Matter.Mouse.create(render.canvas);
+const mouseConstraint = Matter.MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}});
+World.add(engine.world,mouseConstraint);
+render.mouse = mouse;
+
 /***** ランダム凸 7 角ポリゴン生成 *****/
 function randomConvexPolygon(cx,cy,avgR){
   const verts=[];
