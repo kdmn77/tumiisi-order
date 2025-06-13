@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BIG tumi‑isi × Matter.js</title>
 <style>
- body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:460px;padding:24px;background:#fafafa;color:#333}
+ body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:480px;padding:24px;background:#fafafa;color:#333}
  h1{font-size:1.6rem;font-weight:700;margin:0 0 16px}
- #simArea{border:1px solid #ccc;border-radius:8px;margin-bottom:16px;width:100%;height:320px;position:relative;overflow:hidden}
- canvas{display:block}
+ #simArea{border:1px solid #ccc;border-radius:8px;margin-bottom:16px;width:100%;height:360px;position:relative;overflow:hidden}
+ #simCanvas{display:block}
+ #kid{position:absolute;left:12px;bottom:0;height:120px;pointer-events:none}
  .controls{margin-bottom:16px}
  label{font-weight:600;display:block;margin:8px 0 4px}
  select,button{width:100%;padding:.55rem;font-size:1rem;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
@@ -17,15 +18,18 @@
 </head>
 <body>
 <h1>BIG tumi‑isi ドロップ</h1>
-<div id="simArea"></div>
+<div id="simArea">
+  <img src="kids.svg" id="kid" alt="kid">
+  <canvas id="simCanvas"></canvas>
+</div>
 <div class="controls">
  <label>サイズ</label>
  <select id="sizeSel">
-   <option value="20">20cm</option>
-   <option value="30">30cm</option>
-   <option value="40">40cm</option>
-   <option value="50">50cm</option>
-   <option value="60">60cm</option>
+   <option value="20">20cm角</option>
+   <option value="30">30cm角</option>
+   <option value="40">40cm角</option>
+   <option value="50">50cm角</option>
+   <option value="60">60cm角</option>
  </select>
  <label>色</label>
  <select id="colorSel"></select>
@@ -36,34 +40,65 @@
 <script>
 /***** 色リスト *****/
 const colors=[
-  ['01 LEMON','#e6e137'],['02 YELLOW','#f5a623'],['03 MUSTARD','#d68f29'],['04 ORANGE','#f26522'],
-  ['05 RED','#cc3333'],['06 PINK','#e87ca2'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],
-  ['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['12 NAVY','#003468']
+ ['01 LEMON','#e6e137'],['02 YELLOW','#f5a623'],['03 MUSTARD','#d68f29'],['04 ORANGE','#f26522'],
+ ['05 RED','#cc3333'],['06 PINK','#e87ca2'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],
+ ['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['12 NAVY','#003468']
 ];
 const colorSel=document.getElementById('colorSel');
 colors.forEach(([n,c])=>colorSel.add(new Option(n,c)));
 
+/***** サイズ→ブロックSVG パス ******/
+const svgMap={
+  20:'block-20cm.svg',
+  30:'block-30cm.svg',
+  40:'block-40cm.svg',
+  50:'block-50cm.svg',
+  60:'block-60cm.svg'
+};
+
 /***** Matter.js セットアップ *****/
-const Engine=Matter.Engine,Render=Matter.Render,World=Matter.World,Bodies=Matter.Bodies,Runner=Matter.Runner;
-const W=430,H=300;
+const Engine=Matter.Engine,Render=Matter.Render,World=Matter.World,Bodies=Matter.Bodies,Runner=Matter.Runner,Events=Matter.Events,Body=Matter.Body;
+const W=430,H=340; // canvas 内寸
 const engine=Engine.create();
-const render=Render.create({element:document.getElementById('simArea'),engine:engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
+const render=Render.create({canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
 Render.run(render);
 Runner.run(Runner.create(),engine);
 
-/* 床 */
+/* 壁と床 */
 World.add(engine.world,[
-  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true})
+  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true}),          // 床
+  Bodies.rectangle(-20,H/2,40,H,{isStatic:true}),           // 左壁
+  Bodies.rectangle(W+20,H/2,40,H,{isStatic:true}),          // 右壁
+]);
+/* kid と重ならないバリア */
+World.add(engine.world,[
+  Bodies.rectangle(60, H-60, 80,120,{isStatic:true,render:{visible:false}})
 ]);
 
-/***** ドロップ処理 *****/
+/***** SVG を polygon に変換 (簡易) *****/
+async function svgToVertices(url,scale){
+  const txt=await fetch(url).then(r=>r.text());
+  const doc=new DOMParser().parseFromString(txt,'image/svg+xml');
+  const path=doc.querySelector('path,polygon,polyline');
+  if(!path) return null;
+  const pts=Matter.Svg.pathToVertices(path,20); // 粗さ20px
+  return pts.map(p=>({x:p.x*scale,y:p.y*scale}));
+}
+
+/***** ドロップ *****/
 const dropBtn=document.getElementById('dropBtn');
-const sizeSel=document.getElementById('sizeSel');
-dropBtn.onclick=()=>{
-  const sz=+sizeSel.value;
-  const col=colorSel.value;
-  const radius=sz*0.5; // 簡易的に円に見立て
-  const body=Bodies.circle(Math.random()*(W-2*radius)+radius,-40,radius,{restitution:0.4,render:{fillStyle:col,strokeStyle:'#000',lineWidth:1}});
+dropBtn.onclick=async()=>{
+  const size=+document.getElementById('sizeSel').value;
+  const color=colorSel.value;
+  const verts=await svgToVertices(svgMap[size],size/60); // 60 を 1 とする縮尺
+  let body;
+  if(verts&&verts.length>2){
+    body=Bodies.fromVertices(Math.random()*(W-100)+50,-40,[verts],{restitution:0.3,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}});
+  }else{
+    // fallback regular polygon
+    const r=size*0.5;
+    body=Bodies.polygon(Math.random()*(W-2*r)+r,-40,10,r,{restitution:0.3,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}});
+  }
   World.add(engine.world,body);
 };
 </script>
