@@ -74,7 +74,7 @@ dropBtn.onclick=()=>{
   const x=Math.random()*(W-180)+140;  // kid エリア除外
   const y=-60;
 
-  const body=Bodies.polygon(x,y,10,radius,{restitution:0.15,friction:0.6,frictionStatic:0.9,density:0.002,
+  const body=Bodies.polygon(x,y,7,radius,{restitution:0.15,friction:0.6,frictionStatic:0.9,density:0.002,
     render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}});
   Body.rotate(body,Math.random()*Math.PI);
   World.add(engine.world,body);
