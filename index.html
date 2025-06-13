@@ -60,29 +60,51 @@ function refreshColorSel(sz){
   wrap.replaceChildren(...Array.from({length:cnt},(_,i)=>createColorSel(`color${sz}_${i}`)));
 }
 /***** 描画 *****/
-function updateBlocks(){
-  stacks.forEach(s=>s.innerHTML=''); let idx=0;
-  [...sizes].reverse().forEach(sz=>{
+async function updateBlocks(){
+  stacks.forEach(s=>s.innerHTML='');
+  let idx=0;
+  for(const sz of [...sizes].reverse()){
     const cnt=+document.getElementById(`block${sz}`).value||0;
-    const px=sz*pxPerCm;
+    const px = sz*pxPerCm;
     for(let i=0;i<cnt;i++){
       const sel=document.querySelector(`select[name=color${sz}_${i}]`);
-      const color=sel?sel.value:'#ccc';
-      const title=sel?sel.selectedOptions[0].textContent:'';
-      const wrapper=document.createElement('div');
-      wrapper.style.cssText=`position:relative;width:${px}px;height:${px}px`;
-      const fill=document.createElement('div');
-      fill.style.cssText=`width:100%;height:100%;background:${color};mask:url(${svgPaths[`block${sz}`]}) center/contain no-repeat;-webkit-mask:url(${svgPaths[`block${sz}`]}) center/contain no-repeat;`;
-      wrapper.appendChild(fill);
-      const line=document.createElement('img');
-      line.src=svgPaths[`block${sz}`];
-      line.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;';
-      line.alt=title;wrapper.title=title;
-      wrapper.appendChild(line);
-      stacks[idx++%stacks.length].appendChild(wrapper);
+      const fillColor = sel ? sel.value : '#ccc';
+      const title     = sel ? sel.selectedOptions[0].textContent : '';
+
+      /* SVG を取得して面を塗り替え */
+      try{
+        const txt = await fetch(svgPaths[`block${sz}`]).then(r=>r.text());
+        const doc = new DOMParser().parseFromString(txt,'image/svg+xml');
+        const svg = doc.documentElement;
+        svg.setAttribute('width',px);
+        svg.setAttribute('height',px);
+
+        svg.querySelectorAll('path,polygon,rect,polyline,circle,ellipse').forEach(el=>{
+          const f=(el.getAttribute('fill')||'').toLowerCase();
+          if(!f||f==='none'||f==='#fff'||f==='#ffffff'||f==='white') el.setAttribute('fill',fillColor);
+          el.setAttribute('stroke','#000');
+          el.setAttribute('stroke-width','1');
+        });
+        svg.classList.add('block');
+        svg.title=title;
+        stacks[idx++%stacks.length].appendChild(svg);
+      }catch(e){
+        /* fallback: 旧マスク方式 */
+        const wrapper=document.createElement('div');
+        wrapper.style.cssText=`position:relative;width:${px}px;height:${px}px`;
+        const fill=document.createElement('div');
+        fill.style.cssText=`width:100%;height:100%;background:${fillColor};mask:url(${svgPaths[`block${sz}`]}) center/contain no-repeat;-webkit-mask:url(${svgPaths[`block${sz}`]}) center/contain no-repeat;`;
+        wrapper.appendChild(fill);
+        const line=document.createElement('img');
+        line.src=svgPaths[`block${sz}`];
+        line.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;';
+        wrapper.title=title;wrapper.appendChild(line);
+        stacks[idx++%stacks.length].appendChild(wrapper);
+      }
     }
-  });
+  }
   calcTotal();
+}
 }
 /***** 合計 *****/
 function calcTotal(){
