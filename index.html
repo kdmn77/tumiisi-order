@@ -71,36 +71,40 @@ function refreshColorSel(sz){
   wrap.replaceChildren(...Array.from({length:cnt},(_,i)=>createColorSel(`color${sz}_${i}`)));
 }
 /***** 描画 *****/
-async function updateBlocks(){
+function updateBlocks(){
   stacks.forEach(s=>s.innerHTML='');
   let idx=0;
-  for(const sz of [...sizes].reverse()){ // 大→小
+  [...sizes].reverse().forEach(sz=>{
     const cnt=+document.getElementById(`block${sz}`).value||0;
-    const px=sz*pxPerCm;
+    const px = sz*pxPerCm;
     for(let i=0;i<cnt;i++){
       const sel=document.querySelector(`select[name=color${sz}_${i}]`);
-      const baseColor=sel?sel.value:'#ccc';
-      const title    =sel?sel.selectedOptions[0].textContent:'';
+      const color=sel?sel.value:'#ccc';
+      const title=sel?sel.selectedOptions[0].textContent:'';
 
-      const svgTxt = await fetch(svgPaths[`block${sz}`]).then(r=>r.text());
-      const svgDoc = new DOMParser().parseFromString(svgTxt,'image/svg+xml');
-      const svgEl  = svgDoc.documentElement;
-      svgEl.setAttribute('width',px);
-      svgEl.setAttribute('height',px);
+      // 包み div
+      const wrapper=document.createElement('div');
+      wrapper.style.position='relative';
+      wrapper.style.width=px+'px';
+      wrapper.style.height=px+'px';
 
-      svgEl.querySelectorAll('*').forEach(el=>{
-        const fill=(el.getAttribute('fill')||'').toLowerCase();
-        if(fill==='none'||fill==='#ffffff'||fill==='#fff'||fill==='white'){
-          el.setAttribute('fill',baseColor);
-        }
-        el.setAttribute('stroke','#000');
-        el.setAttribute('stroke-width','1');
-      });
-      svgEl.classList.add('block');svgEl.title=title;
-      stacks[idx++%stacks.length].appendChild(svgEl);
+      // 塗りつぶし層 (mask)
+      const fill=document.createElement('div');
+      fill.style.cssText=`width:100%;height:100%;background:${color};mask:url(${svgPaths[`block${sz}`]}) center/contain no-repeat;-webkit-mask:url(${svgPaths[`block${sz}`]}) center/contain no-repeat;`;
+      wrapper.appendChild(fill);
+
+      // 黒線層 (透過 PNG/SVG をそのまま重ねる)
+      const line=document.createElement('img');
+      line.src=svgPaths[`block${sz}`];
+      line.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;';
+      line.alt=title; wrapper.title=title;
+      wrapper.appendChild(line);
+
+      stacks[idx++%stacks.length].appendChild(wrapper);
     }
-  }
+  });
   calcTotal();
+}
 }
 /***** 合計 *****/
 function calcTotal(){
