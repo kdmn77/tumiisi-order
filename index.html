@@ -11,10 +11,8 @@
  #simCanvas{display:block}
  #kid{position:absolute;left:12px;bottom:0;height:120px;pointer-events:none}
  label{font-weight:600}
- select,button{width:100%;padding:.55rem;font-size:1rem;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
- button{background:#007aff;color:#fff;margin-top:12px;border:none}
- #controlHeader{position:sticky;top:0;background:#fafafa;z-index:10;padding-bottom:8px}
- #controlWrap{max-height:220px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:8px}
+ select{width:100%;padding:.55rem;font-size:1rem;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
+ #controlWrap{max-height:260px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:8px}
  .size-section{margin-bottom:16px}
  .size-section span{display:block;margin-bottom:4px}
 </style>
@@ -24,9 +22,6 @@
 <div id="simArea">
   <img src="kids.svg" id="kid" alt="kid">
   <canvas id="simCanvas"></canvas>
-</div>
-<div id="controlHeader">
-  <button id="dropBtn">ブロックを落とす</button>
 </div>
 <div id="controlWrap"></div>
 
@@ -42,26 +37,27 @@ const colors=[
 
 /***** UI 生成 *****/
 const wrap=document.getElementById('controlWrap');
-function createColorSelect(){
+function createColorSelect(size){
   const sel=document.createElement('select');
   colors.forEach(([n,c])=>sel.add(new Option(n,c)));
+  sel.addEventListener('change',()=>{ if(sel.value) dropBlock(size,sel.value);} );
   return sel;
 }
-function refreshColors(sz){
-  const cnt=+document.getElementById('cnt'+sz).value;
-  const area=document.getElementById('colorWrap'+sz);
+function refreshColors(size){
+  const cnt=+document.getElementById('cnt'+size).value;
+  const area=document.getElementById('colorWrap'+size);
   area.innerHTML='';
-  for(let i=0;i<cnt;i++) area.appendChild(createColorSelect());
+  for(let i=0;i<cnt;i++) area.appendChild(createColorSelect(size));
 }
-sizes.forEach(sz=>{
+
+sizes.forEach(size=>{
   const sec=document.createElement('div');sec.className='size-section';
-  sec.innerHTML=`<span>${sz}cm角</span>`;
-  const cntSel=document.createElement('select');cntSel.id='cnt'+sz;
+  sec.innerHTML=`<span>${size}cm角</span>`;
+  const cntSel=document.createElement('select');cntSel.id='cnt'+size;
   [0,1,2,3,4,5].forEach(n=>cntSel.add(new Option(`${n} 個`,n)));
-  cntSel.addEventListener('change',()=>refreshColors(sz));
+  cntSel.addEventListener('change',()=>refreshColors(size));
   sec.appendChild(cntSel);
-  const colorArea=document.createElement('div');colorArea.id='colorWrap'+sz;
-  sec.appendChild(colorArea);
+  const area=document.createElement('div');area.id='colorWrap'+size;sec.appendChild(area);
   wrap.appendChild(sec);
 });
 
@@ -89,20 +85,16 @@ render.mouse=mouse;
 /***** ランダム凸ポリ *****/
 function randPoly(cx,cy,r,n){const verts=[];const step=2*Math.PI/n;let a=Math.random()*step;for(let i=0;i<n;i++){const m=r*(0.8+Math.random()*0.4);verts.push({x:cx+m*Math.cos(a),y:cy+m*Math.sin(a)});a+=step;}return verts;}
 
-/***** ドロップ *****/
-document.getElementById('dropBtn').onclick=()=>{
-  const row=[...wrap.querySelectorAll('.size-section')].find(r=>+r.querySelector('select').value>0&&r.querySelector('select+div select'));
-  if(!row) return alert('数量と色を選択してください');
-  const size=parseInt(row.querySelector('span').textContent);
-  const color=row.querySelector('select+div select').value;
+/***** ブロック投下 *****/
+function dropBlock(size,color){
   const radius=size*0.5;
-  const x=210+Math.random()*40; // 落下幅さらに狭く
+  const x=215+Math.random()*30;   // 中央狭い帯
   const y=-80;
   const sides=Math.random()<0.5?7:9;
   const body=Bodies.fromVertices(x,y,[randPoly(0,0,radius,sides)],{restitution:0,friction:1,frictionStatic:1,frictionAir:0.02,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
   Body.rotate(body,Math.random()*Math.PI);
   World.add(engine.world,body);
-};
+}
 </script>
 </body>
 </html>
