@@ -48,7 +48,7 @@ const colorSel=document.getElementById('colorSel');
 colors.forEach(([n,c])=>colorSel.add(new Option(n,c)));
 
 /***** Matter.js セットアップ *****/
-const Engine=Matter.Engine,Render=Matter.Render,World=Matter.World,Bodies=Matter.Bodies,Runner=Matter.Runner,Body=Matter.Body;
+const {Engine,Render,World,Bodies,Runner,Body,Vertices} = Matter;
 const W=430,H=340;
 const engine=Engine.create();
 const render=Render.create({canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
@@ -64,18 +64,33 @@ World.add(engine.world,[
 /* kid バリア */
 World.add(engine.world,[Bodies.rectangle(60,H-60,100,140,{isStatic:true,render:{visible:false}})]);
 
+/***** ランダム凸 7 角ポリゴン生成 *****/
+function randomConvexPolygon(cx,cy,avgR){
+  const verts=[];
+  const n=7;
+  const angleStep=(Math.PI*2)/n;
+  let angle=Math.random()*angleStep; // ランダムオフセット
+  for(let i=0;i<n;i++){
+    const r=avgR*(0.8+Math.random()*0.4); // 0.8R〜1.2R
+    verts.push({x:cx+r*Math.cos(angle), y:cy+r*Math.sin(angle)});
+    angle+=angleStep;
+  }
+  return verts;
+}
+
 /***** ドロップ *****/
 const dropBtn=document.getElementById('dropBtn');
 const sizeSel=document.getElementById('sizeSel');
 dropBtn.onclick=()=>{
-  const size=+sizeSel.value;          // 20‑60 cm
+  const size=+sizeSel.value;
   const color=colorSel.value;
-  const radius=size*0.45;             // 表示用半径
-  const x=Math.random()*(W-180)+140;  // kid エリア除外
-  const y=-60;
+  const radius=size*0.5; // 平均半径
+  const xStart=Math.random()*(W-180)+140; // kid を避ける
+  const yStart=-80;
 
-  const body=Bodies.polygon(x,y,7,radius,{restitution:0.15,friction:0.6,frictionStatic:0.9,density:0.002,
-    render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}});
+  const verts=randomConvexPolygon(0,0,radius);
+  const body=Bodies.fromVertices(xStart,yStart,[verts],
+    {restitution:0.15,friction:0.6,frictionStatic:0.9,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
   Body.rotate(body,Math.random()*Math.PI);
   World.add(engine.world,body);
 };
