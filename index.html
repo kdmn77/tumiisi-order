@@ -72,7 +72,7 @@ World.add(engine.world,[
 ]);
 /* kid と重ならないバリア */
 World.add(engine.world,[
-  Bodies.rectangle(60, H-60, 80,120,{isStatic:true,render:{visible:false}})
+  Bodies.rectangle(60, H-60, 100, 140, {isStatic:true, render:{visible:false}})
 ]);
 
 /***** SVG を polygon に変換 (簡易) *****/
@@ -81,7 +81,7 @@ async function svgToVertices(url,scale){
   const doc=new DOMParser().parseFromString(txt,'image/svg+xml');
   const path=doc.querySelector('path,polygon,polyline');
   if(!path) return null;
-  const pts=Matter.Svg.pathToVertices(path,20); // 粗さ20px
+  const pts=Matter.Svg.pathToVertices(path,10); // 粗さ20px
   return pts.map(p=>({x:p.x*scale,y:p.y*scale}));
 }
 
@@ -90,15 +90,13 @@ const dropBtn=document.getElementById('dropBtn');
 dropBtn.onclick=async()=>{
   const size=+document.getElementById('sizeSel').value;
   const color=colorSel.value;
-  const verts=await svgToVertices(svgMap[size],size/60); // 60 を 1 とする縮尺
+  const verts=await svgToVertices(svgMap[size],size/60);
+  const x=Math.random()*(W-180)+140;  // kid を避け右側のみ
+  const y=-50;
+  const opts={restitution:0.1,friction:0.6,frictionStatic:0.9,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}};
   let body;
-  if(verts&&verts.length>2){
-    body=Bodies.fromVertices(Math.random()*(W-100)+50,-40,[verts],{restitution:0.3,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}});
-  }else{
-    // fallback regular polygon
-    const r=size*0.5;
-    body=Bodies.polygon(Math.random()*(W-2*r)+r,-40,10,r,{restitution:0.3,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}});
-  }
+  if(verts&&verts.length>2){body=Bodies.fromVertices(x,y,[verts],opts);}else{body=Bodies.polygon(x,y,10,size*0.5,opts);}
+  Body.rotate(body,Math.random()*Math.PI);
   World.add(engine.world,body);
 };
 </script>
