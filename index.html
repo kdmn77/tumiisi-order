@@ -47,18 +47,9 @@ const colors=[
 const colorSel=document.getElementById('colorSel');
 colors.forEach(([n,c])=>colorSel.add(new Option(n,c)));
 
-/***** サイズ→ブロックSVG パス ******/
-const svgMap={
-  20:'block-20cm.svg',
-  30:'block-30cm.svg',
-  40:'block-40cm.svg',
-  50:'block-50cm.svg',
-  60:'block-60cm.svg'
-};
-
 /***** Matter.js セットアップ *****/
-const Engine=Matter.Engine,Render=Matter.Render,World=Matter.World,Bodies=Matter.Bodies,Runner=Matter.Runner,Events=Matter.Events,Body=Matter.Body;
-const W=430,H=340; // canvas 内寸
+const Engine=Matter.Engine,Render=Matter.Render,World=Matter.World,Bodies=Matter.Bodies,Runner=Matter.Runner,Body=Matter.Body;
+const W=430,H=340;
 const engine=Engine.create();
 const render=Render.create({canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
 Render.run(render);
@@ -66,50 +57,27 @@ Runner.run(Runner.create(),engine);
 
 /* 壁と床 */
 World.add(engine.world,[
-  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true}),          // 床
-  Bodies.rectangle(-20,H/2,40,H,{isStatic:true}),           // 左壁
-  Bodies.rectangle(W+20,H/2,40,H,{isStatic:true}),          // 右壁
+  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true}),
+  Bodies.rectangle(-20,H/2,40,H,{isStatic:true}),
+  Bodies.rectangle(W+20,H/2,40,H,{isStatic:true})
 ]);
-/* kid と重ならないバリア */
-World.add(engine.world,[
-  Bodies.rectangle(60, H-60, 100, 140, {isStatic:true, render:{visible:false}})
-]);
-
-/***** SVG を polygon に変換 (簡易) *****/
-async function svgToVertices(url,scale){
-  const txt=await fetch(url).then(r=>r.text());
-  const doc=new DOMParser().parseFromString(txt,'image/svg+xml');
-  const path=doc.querySelector('path,polygon,polyline');
-  if(!path) return null;
-  const pts=Matter.Svg.pathToVertices(path,10); // 粗さ20px
-  return pts.map(p=>({x:p.x*scale,y:p.y*scale}));
-}
+/* kid バリア */
+World.add(engine.world,[Bodies.rectangle(60,H-60,100,140,{isStatic:true,render:{visible:false}})]);
 
 /***** ドロップ *****/
 const dropBtn=document.getElementById('dropBtn');
-dropBtn.onclick=async ()=>{
-  const size = +document.getElementById('sizeSel').value;
-  const color = colorSel.value;
-  const scale = size / 60;
-  const baseX = Math.random() * (W - 180) + 140; // kid エリアを避ける
-  const baseY = -60;
-  const common = {restitution:0.15,friction:0.6,frictionStatic:0.9,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}};
+const sizeSel=document.getElementById('sizeSel');
+dropBtn.onclick=()=>{
+  const size=+sizeSel.value;          // 20‑60 cm
+  const color=colorSel.value;
+  const radius=size*0.45;             // 表示用半径
+  const x=Math.random()*(W-180)+140;  // kid エリア除外
+  const y=-60;
 
-  let candidate = await svgToVertices(svgMap[size], scale);
-  let body;
-  if(candidate && candidate.length > 2){
-    // fromVertices が Array を返す場合もあるのでハンドリング
-    const created = Matter.Bodies.fromVertices(baseX, baseY, candidate, common, true);
-    if(Array.isArray(created)){
-      body = Matter.Body.create({parts:created, ...common});
-    }else{
-      body = created;
-    }
-  }else{
-    body = Matter.Bodies.polygon(baseX, baseY, 10, size * 0.5, common);
-  }
-  Matter.Body.rotate(body, Math.random() * Math.PI);
-  Matter.World.add(engine.world, body);
+  const body=Bodies.polygon(x,y,10,radius,{restitution:0.15,friction:0.6,frictionStatic:0.9,density:0.002,
+    render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}});
+  Body.rotate(body,Math.random()*Math.PI);
+  World.add(engine.world,body);
 };
 </script>
 </body>
