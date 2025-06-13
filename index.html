@@ -71,13 +71,13 @@ World.add(engine.world,mouseConstraint);
 render.mouse = mouse;
 
 /***** ランダム凸 7 角ポリゴン生成 *****/
-function randomConvexPolygon(cx,cy,avgR){
+function randomConvexPolygon(cx, cy, avgR, sides){
   const verts=[];
-  const n=7;
+  const n=sides;
   const angleStep=(Math.PI*2)/n;
-  let angle=Math.random()*angleStep; // ランダムオフセット
+  let angle=Math.random()*angleStep;
   for(let i=0;i<n;i++){
-    const r=avgR*(0.8+Math.random()*0.4); // 0.8R〜1.2R
+    const r=avgR*(0.8+Math.random()*0.4);
     verts.push({x:cx+r*Math.cos(angle), y:cy+r*Math.sin(angle)});
     angle+=angleStep;
   }
@@ -94,7 +94,8 @@ dropBtn.onclick=()=>{
   const xStart=Math.random()*(W-180)+140; // kid を避ける
   const yStart=-80;
 
-  const verts=randomConvexPolygon(0,0,radius);
+  const sides = Math.random()<0.5 ? 7 : 9; // 50% 7角 または 9角
+  const verts = randomConvexPolygon(0,0,radius,sides);
   const body=Bodies.fromVertices(xStart,yStart,[verts],
     {restitution:0.15,friction:0.6,frictionStatic:0.9,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
   Body.rotate(body,Math.random()*Math.PI);
