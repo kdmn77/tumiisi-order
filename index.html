@@ -7,7 +7,7 @@
 <style>
  body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:480px;padding:24px;background:#fafafa;color:#333}
  h1{font-size:1.6rem;font-weight:700;margin:0 0 16px}
- #simArea{border:1px solid #ccc;border-radius:8px;margin-bottom:16px;width:100%;height:360px;position:relative;overflow:hidden}
+ #simArea{border-radius:8px;margin-bottom:16px;width:100%;height:360px;position:relative;overflow:hidden}
  #simCanvas{display:block}
  #kid{position:absolute;left:12px;bottom:0;height:120px;pointer-events:none}
  .controls{margin-bottom:16px}
@@ -22,18 +22,12 @@
   <img src="kids.svg" id="kid" alt="kid">
   <canvas id="simCanvas"></canvas>
 </div>
-<div class="controls">
- <label>サイズ</label>
- <select id="sizeSel">
-   <option value="20">20cm角</option>
-   <option value="30">30cm角</option>
-   <option value="40">40cm角</option>
-   <option value="50">50cm角</option>
-   <option value="60">60cm角</option>
- </select>
- <label>色</label>
- <select id="colorSel"></select>
- <button id="dropBtn">ブロックを落とす</button>
+<div id="controlHeader" style="position:sticky;top:0;background:#fafafa;z-index:10;padding-bottom:8px;">
+ <label style="font-weight:600">ブロックを落とす</label>
+ <button id="dropBtn" style="width:100%;padding:.55rem;font-size:1rem;border:none;background:#007aff;color:#fff;border-radius:8px;">ブロックを落とす</button>
+</div>
+<div id="controlWrap" style="max-height:220px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:8px;">
+  <!-- サイズごとに行生成 -->
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
@@ -44,8 +38,16 @@ const colors=[
  ['05 RED','#cc3333'],['06 PINK','#e87ca2'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],
  ['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['12 NAVY','#003468']
 ];
-const colorSel=document.getElementById('colorSel');
-colors.forEach(([n,c])=>colorSel.add(new Option(n,c)));
+// パレット行を生成
+const controlWrap=document.getElementById('controlWrap');
+sizes.forEach(sz=>{
+  const row=document.createElement('div');row.style.display='flex';row.style.alignItems='center';row.style.marginBottom='8px';
+  row.innerHTML=`<span style="flex:0 0 80px">${sz}cm角</span>`;
+  const sel=document.createElement('select');sel.style.flex='1';colors.forEach(([n,c])=>sel.add(new Option(n,c)));
+  sel.dataset.size=sz;
+  row.appendChild(sel);
+  controlWrap.appendChild(row);
+});(([n,c])=>colorSel.add(new Option(n,c)));
 
 /***** Matter.js セットアップ *****/
 const {Engine,Render,World,Bodies,Runner,Body,Vertices} = Matter;
@@ -86,18 +88,19 @@ function randomConvexPolygon(cx, cy, avgR, sides){
 
 /***** ドロップ *****/
 const dropBtn=document.getElementById('dropBtn');
-const sizeSel=document.getElementById('sizeSel');
+// 旧 sizeSel 削除
 dropBtn.onclick=()=>{
-  const size=+sizeSel.value;
-  const color=colorSel.value;
-  const radius=size*0.5; // 平均半径
-  const xStart=Math.random()*(W-180)+140; // kid を避ける
+  // 最初に選択された行を取得
+  const sel=[...controlWrap.querySelectorAll('select')].find(s=>s.value);
+  if(!sel)return alert('色を選択してください');
+  const size=+sel.dataset.size;
+  const color=sel.value;
+  const radius=size*0.5;
+  const xStart=200+Math.random()*60; // さらに狭い幅
   const yStart=-80;
-
-  const sides = Math.random()<0.5 ? 7 : 9; // 50% 7角 または 9角
-  const verts = randomConvexPolygon(0,0,radius,sides);
-  const body=Bodies.fromVertices(xStart,yStart,[verts],
-    {restitution:0,friction:1,frictionStatic:1,frictionAir:0.02,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
+  const sides=Math.random()<0.5?7:9;
+  const verts=randomConvexPolygon(0,0,radius,sides);
+  const body=Bodies.fromVertices(xStart,yStart,[verts],{restitution:0,friction:1,frictionStatic:1,frictionAir:0.02,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
   Body.rotate(body,Math.random()*Math.PI);
   World.add(engine.world,body);
 };
