@@ -5,109 +5,113 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BIG tumi‑isi × Matter.js</title>
 <style>
- body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:480px;padding:24px;background:#fafafa;color:#333;}
- h1{font-size:1.6rem;font-weight:700;margin:0 0 16px;}
- #simArea{border-radius:8px;margin-bottom:16px;width:100%;height:360px;position:relative;overflow:hidden;}
- #simCanvas{display:block;}
- #kid{position:absolute;left:20px;bottom:20px;height:120px;pointer-events:none;z-index:5;}}}
- label{font-weight:600;}
- select{width:100%;padding:.55rem;font-size:1rem;border:none;border-radius:8px;box-sizing:border-box;}
- #controlWrap{max-height:260px;overflow-y:auto;border-radius:8px;padding:8px;}
- .size-section{margin-bottom:16px;}
- .size-section span{display:block;margin-bottom:4px;}
+ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:480px;padding:16px;background:#fafafa;color:#333;-webkit-font-smoothing:antialiased}
+ h1{font-size:1.6rem;font-weight:700;margin:0 0 12px}
+ /* タブ */
+ .tabs{display:flex;gap:8px;margin-bottom:12px}
+ .tab{flex:1;text-align:center;padding:8px 0;border:1px solid #ccc;border-radius:6px;cursor:pointer;background:#fff}
+ .tab.active{background:#007aff;color:#fff;border-color:#007aff}
+ #simArea{position:relative;width:100%;height:320px;margin-bottom:12px;border-radius:8px;overflow:hidden;background:#fff}
+ #simCanvas{display:block}
+ #kid{position:absolute;left:20px;bottom:20px;height:120px;pointer-events:none;z-index:5}
+ /* カラーパネル */
+ #colorPanel{position:absolute;top:16px;right:16px;background:#fff;border:1px solid #ccc;border-radius:6px;padding:8px;display:none;z-index:10}
+ #colorPanel select{width:100%;margin-bottom:8px;padding:4px;font-size:0.9rem;border:1px solid #ccc;border-radius:4px}
+ #colorPanel button{width:100%;padding:6px;background:#007aff;color:#fff;border:none;border-radius:4px}
 </style>
 </head>
 <body>
 <h1>BIG tumi‑isi ドロップ</h1>
+<div class="tabs">
+  <div class="tab" data-plan="S">PLAN S</div>
+  <div class="tab" data-plan="M">PLAN M</div>
+  <div class="tab" data-plan="L">PLAN L</div>
+</div>
 <div id="simArea">
   <img src="kids.svg" id="kid" alt="kid">
   <canvas id="simCanvas"></canvas>
+  <div id="colorPanel">
+    <select id="blockColorSel"></select>
+    <button id="applyColorBtn">色を適用</button>
+  </div>
 </div>
-<div id="controlWrap"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
-/***** 定数 *****/
-const sizes = [20, 30, 40, 50, 60];
-const colors = [
-  ['01 LEMON','#e6e137'], ['02 YELLOW','#f5a623'], ['03 MUSTARD','#d68f29'], ['04 ORANGE','#f26522'],
-  ['05 RED','#cc3333'], ['06 PINK','#e87ca2'], ['07 VIOLET','#a55c9a'], ['08 PURPLE','#8463a3'],
-  ['09 LIGHT BLUE','#2c9ab7'], ['10 INDIGO','#1e4f91'], ['11 BLUE','#005bab'], ['12 NAVY','#003468']
-];
+// プラン別設定
+const plans = {
+  S: [{size:20,count:2},{size:30,count:2},{size:40,count:2}],
+  M: [{size:20,count:2},{size:30,count:2},{size:40,count:2},{size:50,count:1},{size:60,count:1}],
+  L: [{size:20,count:5},{size:30,count:5},{size:40,count:3},{size:50,count:2},{size:60,count:2}]
+};
+const colors = ['#e6e137','#f5a623','#d68f29','#f26522','#cc3333','#e87ca2','#a55c9a','#8463a3','#2c9ab7','#1e4f91','#005bab','#003468'];
 
-/***** UI 生成 *****/
-const wrap = document.getElementById('controlWrap');
-function createColorSelect(size) {
-  const sel = document.createElement('select');
-  colors.forEach(([n, c]) => sel.add(new Option(n, c)));
-  sel.addEventListener('change', () => { if(sel.value) dropBlock(size, sel.value); });
-  return sel;
-}
-function refreshColors(size) {
-  const cnt = +document.getElementById('cnt'+size).value;
-  const area = document.getElementById('colorWrap'+size);
-  area.innerHTML = '';
-  for(let i = 0; i < cnt; i++) area.appendChild(createColorSelect(size));
+// Matter初期化
+const {Engine,Render,World,Bodies,Runner,Body,Mouse,MouseConstraint,Events} = Matter;
+const W=430,H=320;const engine=Engine.create();
+const render=Render.create({element:null,canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
+Render.run(render);Runner.run(Runner.create(),engine);
+World.add(engine.world,[
+  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true,render:{visible:false}}),
+  Bodies.rectangle(-20,H/2,40,H,{isStatic:true,render:{visible:false}}),
+  Bodies.rectangle(W+20,H/2,40,H,{isStatic:true,render:{visible:false}}),
+  Bodies.rectangle(70,H-60,110,140,{isStatic:true,render:{visible:false}})
+]);
+// ドラッグ
+const mouse=Mouse.create(render.canvas);
+World.add(engine.world,MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}}));
+render.mouse=mouse;
+
+// タブクリック
+const tabs=document.querySelectorAll('.tab');tabs.forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    tabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    dropPlan(tab.dataset.plan);
+  });
+});
+// デフォルト
+tabs[0].click();
+
+// プラン落下
+function dropPlan(pl){
+  plans[pl].forEach(item=>{
+    for(let i=0;i<item.count;i++){
+      dropBlock(item.size,'#ccc');
+    }
+  });
 }
 
-sizes.forEach(size => {
-  const sec = document.createElement('div'); sec.className = 'size-section';
-  sec.innerHTML = `<span>${size}cm角</span>`;
-  const cntSel = document.createElement('select'); cntSel.id = 'cnt'+size;
-  [0,1,2,3,4,5].forEach(n => cntSel.add(new Option(`${n} 個`, n)));
-  cntSel.addEventListener('change', () => refreshColors(size));
-  sec.appendChild(cntSel);
-  const area = document.createElement('div'); area.id = 'colorWrap'+size; sec.appendChild(area);
-  wrap.appendChild(sec);
+// ランダム凸ポリ
+function randPoly(r,n){const v=[];let a=Math.random()*2*Math.PI/n;const step=2*Math.PI/n;for(let i=0;i<n;i++){const rad=r*(0.8+Math.random()*0.4);v.push({x:rad*Math.cos(a),y:rad*Math.sin(a)});a+=step;}return v;}
+
+// 色パネル
+const colorPanel=document.getElementById('colorPanel');
+const colorSel=document.getElementById('blockColorSel');
+colors.forEach(c=>colorSel.add(new Option('',c)));
+document.getElementById('applyColorBtn').onclick=()=>{
+  if(selectedBody){selectedBody.render.fillStyle=colorSel.value;selectedBody=null;colorPanel.style.display='none';}
+};
+let selectedBody=null;
+
+// クリックで選択
+Events.on(engine,'mousedown',e=>{
+  const mousePos=e.mouse.position;
+  const bodies=Matter.Query.point(engine.world.bodies,mousePos);
+  const b=bodies.find(b=>!b.isStatic && b.label==='Polygon Body');
+  if(b){selectedBody=b;colorPanel.style.display='block'; colorPanel.style.left=(e.mouse.absolute.x+10)+'px'; colorPanel.style.top=(e.mouse.absolute.y+10)+'px';}
 });
 
-/***** Matter.js セットアップ *****/
-const { Engine, Render, World, Bodies, Runner, Body, Mouse, MouseConstraint } = Matter;
-const W = 430, H = 340;
-const engine = Engine.create();
-const render = Render.create({canvas: document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
-Render.run(render);
-Runner.run(Runner.create(), engine);
-
-// 壁・床・kidバリア
-World.add(engine.world, [
-  Bodies.rectangle(W/2, H+20, W, 40, {isStatic:true, friction:1, frictionStatic:1, render:{visible:false}}),
-  Bodies.rectangle(30, H/2, 40, H, {isStatic:true, friction:1, frictionStatic:1, render:{visible:false}}),
-  Bodies.rectangle(W+20, H/2, 40, H, {isStatic:true, friction:1, frictionStatic:1, render:{visible:false}}),
-  
-]);
-
-// ドラッグ
-const mouse = Mouse.create(render.canvas);
-World.add(engine.world, MouseConstraint.create(engine, {mouse,constraint:{stiffness:0.2,render:{visible:false}}}));
-render.mouse = mouse;
-
-/***** 凸多角形生成 *****/
-function randPoly(cx,cy,r,n) {
-  const verts = [];
-  const step = (2*Math.PI)/n;
-  let a = Math.random()*step;
-  for(let i=0;i<n;i++){
-    const m = r*(0.8 + Math.random()*0.4);
-    verts.push({x:cx + m*Math.cos(a), y:cy + m*Math.sin(a)});
-    a += step;
-  }
-  return verts;
-}
-
-/***** ブロック投下 *****/
-function dropBlock(size, color) {
-  const radius = size * 0.5;
-  // ドロップ幅を中央60%に調整
-  const dropWidth = W * 0.6;
-  const dropX0 = (W - dropWidth) / 2;
-  const x = dropX0 + Math.random() * dropWidth; // 中央狭い帯
-  const y = -80;
-  const sides = Math.random()<0.5 ? 7 : 9;
-  const verts = randPoly(0,0,radius,sides);
-  const body = Bodies.fromVertices(x, y, [verts], {restition:0, friction:1, frictionStatic:1, frictionAir:0, density:0.002, render:{fillStyle:color, strokeStyle:'#000', lineWidth:1}}, true);
-  Body.rotate(body, Math.random()*Math.PI);
-  World.add(engine.world, body);
+// ドロップ
+function dropBlock(size,color){
+  const r=size*0.5;
+  const dropW=W*0.6, x0=(W-dropW)/2;
+  const x=x0+Math.random()*dropW, y=-40;
+  const sides=Math.random()<0.5?7:9;
+  const verts=randPoly(r,sides);
+  const body=Bodies.fromVertices(x,y,[verts],{restitution:0,friction:1,frictionStatic:1,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
+  Body.rotate(body,Math.random()*Math.PI);
+  World.add(engine.world,body);
 }
 </script>
 </body>
