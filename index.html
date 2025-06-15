@@ -98,7 +98,10 @@ function randPoly(cx,cy,r,n) {
 /***** ブロック投下 *****/
 function dropBlock(size, color) {
   const radius = size * 0.5;
-  const x = 200 + Math.random()*30; // 中央狭い帯
+  // ドロップ幅を中央60%に調整
+  const dropWidth = W * 0.6;
+  const dropX0 = (W - dropWidth) / 2;
+  const x = dropX0 + Math.random() * dropWidth; // 中央狭い帯
   const y = -80;
   const sides = Math.random()<0.5 ? 7 : 9;
   const verts = randPoly(0,0,radius,sides);
