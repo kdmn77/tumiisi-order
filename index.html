@@ -13,7 +13,7 @@
  .tab.active,.tab2.active{background:#007aff;color:#fff;border-color:#007aff}
  #simArea{position:relative;width:100%;height:300px;margin-bottom:12px;border-radius:8px;overflow:hidden;background:#fff}
  #simCanvas{display:block}
- #kid{position:absolute;left:20px;bottom:10px;height:120px;pointer-events:none;z-index:5}
+ #kid{position:absolute;left:20px;bottom:-110px;height:120px;pointer-events:none;z-index:5;}}
  #colorPanel{position:absolute;top:16px;right:16px;background:#fff;border:1px solid #ccc;border-radius:6px;padding:8px;display:none;z-index:10;max-width:120px;display:grid;grid-template-columns:repeat(4,24px);grid-gap:4px}
  .swatch{width:24px;height:24px;border:1px solid #aaa;cursor:pointer}
  #clearBtn{position:absolute;right:16px;bottom:16px;width:40px;height:40px;border:none;border-radius:50%;background:#e74c3c;color:#fff;font-size:1.2rem;cursor:pointer;z-index:10}
@@ -58,9 +58,12 @@ const render=Render.create({canvas:document.getElementById('simCanvas'),engine,o
 Render.run(render);Runner.run(Runner.create(),engine);
 // 壁非表示
 World.add(engine.world,[
-  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true,render:{visible:false}}),
-  Bodies.rectangle(-20,H/2,40,H,{isStatic:true,render:{visible:false}}),
-  Bodies.rectangle(W+20,H/2,40,H,{isStatic:true,render:{visible:false}})
+  // 床を100px下に
+  Bodies.rectangle(W/2, H+120, W, 40, {isStatic:true, render:{visible:false}}),
+  // 左の壁を100px右に
+  Bodies.rectangle(80, H/2, 40, H, {isStatic:true, render:{visible:false}}),
+  // 右の壁を100px左に
+  Bodies.rectangle(W-80, H/2, 40, H, {isStatic:true, render:{visible:false}})
 ]);
 const mouse=Mouse.create(render.canvas);
 World.add(engine.world,MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}}));render.mouse=mouse;
