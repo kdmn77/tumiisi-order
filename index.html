@@ -11,11 +11,11 @@
  .tabs2{display:flex;gap:4px;margin-bottom:12px}
  .tab,.tab2{flex:1;text-align:center;padding:6px 0;border:1px solid #ccc;border-radius:6px;cursor:pointer;background:#fff;font-size:0.9rem}
  .tab.active,.tab2.active{background:#007aff;color:#fff;border-color:#007aff}
- #simArea{position:relative;width:100%;height:400px;margin-bottom:12px;border-radius:8px;overflow:hidden;background:#fff}
+ #simArea{position:relative;width:100%;height:300px;margin-bottom:12px;border-radius:8px;overflow:hidden;background:#fff}
  #simCanvas{display:block}
- #kid{position:absolute;left:20px;bottom:-110px;height:120px;pointer-events:none;z-index:5}
+ #kid{position:absolute;left:20px;bottom:0px;height:120px;pointer-events:none;z-index:5}
  #colorPanel{position:absolute;top:16px;right:16px;background:#fff;border:1px solid #ccc;border-radius:6px;padding:8px;display:none;z-index:10;max-width:120px;display:grid;grid-template-columns:repeat(4,24px);grid-gap:4px}
- .swatch{width:24px;height:24px;border:1px solid #aaa;cursor:pointer}
+ .swatch{width:19px;height:19px;border:1px solid #aaa;cursor:pointer}
  #clearBtn{position:absolute;right:16px;bottom:16px;width:40px;height:40px;border:none;border-radius:50%;background:#e74c3c;color:#fff;font-size:1.2rem;cursor:pointer;z-index:10}
 </style>
 </head>
@@ -52,17 +52,55 @@ const colors=[
   ['25 OFF WHITE','#f1eee9'],['26 WHITE','#ffffff'],['27 BLACK','#000000'],['28 AQUA','#7cc8b3'],
   ['29 SKY','#6caee0'],['30 CANDY PINK','#e79ea0'],['31 ORANGE RED','#dd3526'],['32 LIME','#78ac3f']
 ];
-const {Engine,Render,World,Bodies,Runner,Body,Mouse,MouseConstraint,Composite,Query}=Matter;
+const {Engine,Render,World,Bodies,Runner,Body,Mouse,MouseConstraint,Events,Composite,Query}=Matter;
 const W=430,H=300,engine=Engine.create();
 const render=Render.create({canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
 Render.run(render);Runner.run(Runner.create(),engine);
-// 壁非表示 & フレーム下げ
+// 壁非表示
 World.add(engine.world,[
-  Bodies.rectangle(W/2, H+60, W, 40, {isStatic:true,render:{visible:false}}),
-  Bodies.rectangle(80, H/2, 40, H, {isStatic:true,render:{visible:false}}),
-  Bodies.rectangle(W-80, H/2, 40, H, {isStatic:true,render:{visible:false}})
+  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true,render:{visible:false}}),
+  Bodies.rectangle(-20,H/2,40,H,{isStatic:true,render:{visible:false}}),
+  Bodies.rectangle(W-80,H/2,40,H,{isStatic:true,render:{visible:false}})
 ]);
 const mouse=Mouse.create(render.canvas);
 World.add(engine.world,MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}}));render.mouse=mouse;
 let activePlan=null;
-document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t
+document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');activePlan=tab.dataset.plan;dropPlan();
+}));
+document.querySelectorAll('.tab2').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.tab2').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');const size=+tab.dataset.size;dropBlock(size,'#ccc');
+}));
+function dropPlan(){if(!activePlan) return;plans[activePlan].forEach(item=>{for(let i=0;i<item.count;i++)dropBlock(item.size,'#ccc');});}
+function randPoly(r,n){const v=[];const step=2*Math.PI/n;let a=Math.random()*step;for(let i=0;i<n;i++){const m=r*(0.8+Math.random()*0.4);v.push({x:Math.cos(a)*m,y:Math.sin(a)*m});a+=step;}return v;}
+const colorPanel=document.getElementById('colorPanel');let selBody=null;
+// パレット生成
+colors.forEach(([name,hex])=>{
+  const sw=document.createElement('div');sw.className='swatch';sw.title=name;sw.style.background=hex;
+  sw.addEventListener('click',()=>{if(selBody){selBody.render.fillStyle=hex;colorPanel.style.display='none';selBody=null;}});
+  colorPanel.appendChild(sw);
+});
+// クリック時パレット表示
+render.canvas.addEventListener('mousedown', evt => {
+  const rect = render.canvas.getBoundingClientRect();
+  const pos={x:evt.clientX-rect.left,y:evt.clientY-rect.top};
+  const found=Query.point(engine.world.bodies,pos).find(b=>!b.isStatic);
+  if(found){ selBody=found; colorPanel.style.display='grid'; }
+});
+// ドロップ幅狭め
+const dropWidth=200;function dropBlock(size,color){
+  const r=size*0.5; const x0=(W-dropWidth)/2;
+  const x=x0+Math.random()*dropWidth; const y=-40;
+  const sides= Math.random()<0.5?7:9;
+  const verts=randPoly(r,sides);
+  const body=Bodies.fromVertices(x,y,[verts],{restitution:0,friction:1,frictionStatic:1,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
+  Body.rotate(body,Math.random()*Math.PI);
+  World.add(engine.world,body);
+}
+// クリア
+document.getElementById('clearBtn').onclick=()=>{Composite.allBodies(engine.world).filter(b=>!b.isStatic).forEach(b=>World.remove(engine.world,b));};
+</script>
+</body>
+</html>
