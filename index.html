@@ -86,7 +86,7 @@
     const statsDiv=document.getElementById('stats');
     const listDiv=document.getElementById('blockList');
     function updateStats(){
-      statsDiv.textContent=`個数: ${blockCount} ／ 合計金額: ¥${totalPrice.toLocaleString()}`;
+      statsDiv.textContent=`BLOCK: ${blockCount} ／ TOTAL: ¥${totalPrice.toLocaleString()}`;
       listDiv.innerHTML=droppedBlocks.map((b,i)=>`${i+1}. ${b.size}㎤ - ${b.name}`).join("<br>");
     }
 
