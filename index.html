@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BIG tumi‑isi × Matter.js</title>
+  <title>BIG tumi-isi × Matter.js</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -47,7 +47,7 @@
     #simArea {
       position: relative;
       width: 100%;
-      height: 400px;
+      height: 300px;
       margin-bottom: 12px;
       border-radius: 8px;
       overflow: hidden;
@@ -102,7 +102,7 @@
   </style>
 </head>
 <body>
-  <h1>BIG tumi‑isi ドロップ</h1>
+  <h1>BIG tumi-isi ドロップ</h1>
   <div class="tabs">
     <div class="tab" data-plan="S">PLAN S</div>
     <div class="tab" data-plan="M">PLAN M</div>
@@ -123,35 +123,18 @@
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
   <script>
-    const plans = {
-      S: [{ size: 20, count: 2 }, { size: 30, count: 2 }, { size: 40, count: 2 }],
-      M: [{ size: 20, count: 2 }, { size: 30, count: 2 }, { size: 40, count: 2 }, { size: 50, count: 1 }, { size: 60, count: 1 }],
-      L: [{ size: 20, count: 5 }, { size: 30, count: 5 }, { size: 40, count: 3 }, { size: 50, count: 2 }, { size: 60, count: 2 }]
-    };
-    const colors = [
-      ['01 LEMON', '#e6e137'], ['02 YELLOW', '#f5a623'], ['03 MUSTARD', '#d68f29'], ['04 ORANGE', '#f26522'],
-      ['05 RED', '#cc3333'], ['06 PINK', '#e87ca2'], ['07 VIOLET', '#a55c9a'], ['08 PURPLE', '#8463a3'],
-      ['09 LIGHT BLUE', '#2c9ab7'], ['10 INDIGO', '#1e4f91'], ['11 BLUE', '#005bab'], ['12 NAVY', '#003468'],
-      ['13 MINT BLUE', '#7ac4b8'], ['14 PISTACHIO', '#c9dca4'], ['15 LIGHT GREEN', '#cde146'], ['16 GRASS GREEN', '#617a3d'],
-      ['17 DARK GREEN', '#4b5331'], ['18 BEIGE', '#bba38f'], ['19 PALE BROWN', '#886d55'], ['20 BROWN', '#5d3a21'],
-      ['21 CAMEL', '#b47533'], ['22 MID GREY', '#9c9ba1'], ['23 DARK GREY', '#4f4f4f'], ['24 PEARL WHITE', '#dcd4c3'],
-      ['25 OFF WHITE', '#f1eee9'], ['26 WHITE', '#ffffff'], ['27 BLACK', '#000000'], ['28 AQUA', '#7cc8b3'],
-      ['29 SKY', '#6caee0'], ['30 CANDY PINK', '#e79ea0'], ['31 ORANGE RED', '#dd3526'], ['32 LIME', '#78ac3f']
-    ];
-    const { Engine, Render, World, Bodies, Runner, Body, Mouse, MouseConstraint, Events, Composite, Query } = Matter;
+    const plans = { S: [{ size: 20, count: 2 }, { size: 30, count: 2 }, { size: 40, count: 2 }], M: [{ size: 20, count: 2 }, { size: 30, count: 2 }, { size: 40, count: 2 }, { size: 50, count: 1 }, { size: 60, count: 1 }], L: [{ size: 20, count: 5 }, { size: 30, count: 5 }, { size: 40, count: 3 }, { size: 50, count: 2 }, { size: 60, count: 2 }] };
+    const colors = [ ['01 LEMON', '#e6e137'], ['02 YELLOW', '#f5a623'], ['03 MUSTARD', '#d68f29'], ['04 ORANGE', '#f26522'], ['05 RED', '#cc3333'], ['06 PINK', '#e87ca2'], ['07 VIOLET', '#a55c9a'], ['08 PURPLE', '#8463a3'], ['09 LIGHT BLUE', '#2c9ab7'], ['10 INDIGO', '#1e4f91'], ['11 BLUE', '#005bab'], ['12 NAVY', '#003468'], ['13 MINT BLUE', '#7ac4b8'], ['14 PISTACHIO', '#c9dca4'], ['15 LIGHT GREEN', '#cde146'], ['16 GRASS GREEN', '#617a3d'], ['17 DARK GREEN', '#4b5331'], ['18 BEIGE', '#bba38f'], ['19 PALE BROWN', '#886d55'], ['20 BROWN', '#5d3a21'], ['21 CAMEL', '#b47533'], ['22 MID GREY', '#9c9ba1'], ['23 DARK GREY', '#4f4f4f'], ['24 PEARL WHITE', '#dcd4c3'], ['25 OFF WHITE', '#f1eee9'], ['26 WHITE', '#ffffff'], ['27 BLACK', '#000000'], ['28 AQUA', '#7cc8b3'], ['29 SKY', '#6caee0'], ['30 CANDY PINK', '#e79ea0'], ['31 ORANGE RED', '#dd3526'], ['32 LIME', '#78ac3f'] ];
+    const { Engine, Render, World, Bodies, Runner, Body, Mouse, MouseConstraint, Composite, Query } = Matter;
     const W = 430, H = 300;
     const engine = Engine.create();
-    const render = Render.create({
-      canvas: document.getElementById('simCanvas'),
-      engine,
-      options: { width: W, height: H, wireframes: false, background: '#fafafa' }
-    });
+    const render = Render.create({ canvas: document.getElementById('simCanvas'), engine, options: { width: W, height: H, wireframes: false, background: '#fafafa' } });
     Render.run(render);
     Runner.run(Runner.create(), engine);
 
-    // 壁（右壁をW-80に設定）
+    // 床のY座標をH-100に変更
     World.add(engine.world, [
-      Bodies.rectangle(W/2, H-0, W, 40, { isStatic: true, render: { visible: false } }),
+      Bodies.rectangle(W/2, H-100, W, 40, { isStatic: true, render: { visible: false } }),
       Bodies.rectangle(-20, H/2, 40, H, { isStatic: true, render: { visible: false } }),
       Bodies.rectangle(W-80, H/2, 40, H, { isStatic: true, render: { visible: false } })
     ]);
@@ -161,7 +144,7 @@
     render.mouse = mouse;
 
     let activePlan = null;
-    let currentColor = '#ccc'; // ドロップ時の色
+    let currentColor = '#ccc';
 
     document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -173,98 +156,18 @@
     document.querySelectorAll('.tab2').forEach(tab => tab.addEventListener('click', () => {
       document.querySelectorAll('.tab2').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      const size = +tab.dataset.size;
-      dropBlock(size, currentColor);
+      dropBlock(+tab.dataset.size, currentColor);
     }));
 
-    function dropPlan() {
-      if (!activePlan) return;
-      plans[activePlan].forEach(item => {
-        for (let i = 0; i < item.count; i++) dropBlock(item.size, currentColor);
-      });
-    }
-
-    function randPoly(r, n) {
-      const v = [];
-      const step = 2 * Math.PI / n;
-      let a = Math.random() * step;
-      for (let i = 0; i < n; i++) {
-        const m = r * (0.8 + Math.random() * 0.4);
-        v.push({ x: Math.cos(a) * m, y: Math.sin(a) * m });
-        a += step;
-      }
-      return v;
-    }
-
+    function dropPlan() { if (!activePlan) return; plans[activePlan].forEach(item => { for (let i = 0; i < item.count; i++) dropBlock(item.size, currentColor); }); }
+    function randPoly(r, n) { const v = []; const step = 2 * Math.PI / n; let a = Math.random() * step; for (let i = 0; i < n; i++) { const m = r * (0.8 + Math.random() * 0.4); v.push({ x: Math.cos(a) * m, y: Math.sin(a) * m }); a += step; } return v; }
     const colorPanel = document.getElementById('colorPanel');
     let selBody = null;
-
-    // スウォッチ生成＆カラー選択
-    colors.forEach(([name, hex]) => {
-      const sw = document.createElement('div');
-      sw.className = 'swatch';
-      sw.title = name;
-      sw.style.background = hex;
-      sw.addEventListener('click', () => {
-        if (selBody) {
-          selBody.render.fillStyle = hex;
-          selBody = null;
-          colorPanel.style.display = 'none';
-        } else {
-          currentColor = hex;
-          colorPanel.style.display = 'none';
-        }
-      });
-      colorPanel.appendChild(sw);
-    });
-
-    // ブロック選択（PC）
-    render.canvas.addEventListener('mousedown', evt => {
-      const rect = render.canvas.getBoundingClientRect();
-      const pos = { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-      const found = Query.point(engine.world.bodies, pos).find(b => !b.isStatic);
-      if (found) {
-        selBody = found;
-        colorPanel.style.display = 'grid';
-      }
-    });
-
-    // タッチ対応（スマホ）
-    render.canvas.addEventListener('touchstart', evt => {
-      const touch = evt.touches[0];
-      const rect = render.canvas.getBoundingClientRect();
-      const pos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-      const found = Query.point(engine.world.bodies, pos).find(b => !b.isStatic);
-      if (found) {
-        selBody = found;
-        colorPanel.style.display = 'grid';
-      }
-    });
-
-    // ドロップ幅とブロック生成
-    const dropWidth = 200;
-    function dropBlock(size, color) {
-      const r = size * 0.5;
-      const x0 = (W - dropWidth) / 2;
-      const x = x0 + Math.random() * dropWidth;
-      const y = -40;
-      const sides = Math.random() < 0.5 ? 7 : 9;
-      const verts = randPoly(r, sides);
-      const body = Bodies.fromVertices(x, y, [verts], {
-        restitution: 0,
-        friction: 1,
-        frictionStatic: 1,
-        density: 0.002,
-        render: { fillStyle: color, strokeStyle: '#000', lineWidth: 1 }
-      }, true);
-      Body.rotate(body, Math.random() * Math.PI);
-      World.add(engine.world, body);
-    }
-
-    // クリア
-    document.getElementById('clearBtn').onclick = () => {
-      Composite.allBodies(engine.world).filter(b => !b.isStatic).forEach(b => World.remove(engine.world, b));
-    };
+    colors.forEach(([name, hex]) => { const sw = document.createElement('div'); sw.className = 'swatch'; sw.title = name; sw.style.background = hex; sw.addEventListener('click', () => { if (selBody) { selBody.render.fillStyle = hex; selBody = null; colorPanel.style.display = 'none'; } else { currentColor = hex; colorPanel.style.display = 'none'; } }); colorPanel.appendChild(sw); });
+    render.canvas.addEventListener('mousedown', evt => { const rect = render.canvas.getBoundingClientRect(); const pos = { x: evt.clientX - rect.left, y: evt.clientY - rect.top }; const found = Query.point(engine.world.bodies, pos).find(b => !b.isStatic); if (found) { selBody = found; colorPanel.style.display = 'grid'; } });
+    render.canvas.addEventListener('touchstart', evt => { const touch = evt.touches[0]; const rect = render.canvas.getBoundingClientRect(); const pos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top }; const found = Query.point(engine.world.bodies, pos).find(b => !b.isStatic); if (found) { selBody = found; colorPanel.style.display = 'grid'; } });
+    const dropWidth = 200; function dropBlock(size, color) { const r = size * 0.5; const x0 = (W - dropWidth) / 2; const x = x0 + Math.random() * dropWidth; const y = -40; const sides = Math.random() < 0.5 ? 7 : 9; const verts = randPoly(r, sides); const body = Bodies.fromVertices(x, y, [verts], { restitution: 0, friction: 1, frictionStatic: 1, density: 0.002, render: { fillStyle: color, strokeStyle: '#000', lineWidth: 1 } }, true); Body.rotate(body, Math.random() * Math.PI); World.add(engine.world, body); }
+    document.getElementById('clearBtn').onclick = () => { Composite.allBodies(engine.world).filter(b => !b.isStatic).forEach(b => World.remove(engine.world, b)); };
   </script>
 </body>
 </html>
