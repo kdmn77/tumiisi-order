@@ -72,7 +72,7 @@ Runner.run(Runner.create(), engine);
 // 壁・床・kidバリア
 World.add(engine.world, [
   Bodies.rectangle(W/2, H+20, W, 40, {isStatic:true, friction:1, frictionStatic:1, render:{visible:false}}),
-  Bodies.rectangle(-20, H/2, 40, H, {isStatic:true, friction:1, frictionStatic:1, render:{visible:false}}),
+  Bodies.rectangle(30, H/2, 40, H, {isStatic:true, friction:1, frictionStatic:1, render:{visible:false}}),
   Bodies.rectangle(W+20, H/2, 40, H, {isStatic:true, friction:1, frictionStatic:1, render:{visible:false}}),
   
 ]);
