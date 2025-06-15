@@ -1,106 +1,270 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BIG tumi‑isi × Matter.js</title>
-<style>
- body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:480px;padding:16px;background:#fafafa;color:#333;-webkit-font-smoothing:antialiased}
- h1{font-size:1.6rem;font-weight:700;margin:0 0 12px}
- .tabs{display:flex;gap:8px;margin-bottom:8px}
- .tabs2{display:flex;gap:4px;margin-bottom:12px}
- .tab,.tab2{flex:1;text-align:center;padding:6px 0;border:1px solid #ccc;border-radius:6px;cursor:pointer;background:#fff;font-size:0.9rem}
- .tab.active,.tab2.active{background:#007aff;color:#fff;border-color:#007aff}
- #simArea{position:relative;width:100%;height:300px;margin-bottom:12px;border-radius:8px;overflow:hidden;background:#fff}
- #simCanvas{display:block}
- #kid{position:absolute;left:20px;bottom:0px;height:120px;pointer-events:none;z-index:5}
- #colorPanel{position:absolute;top:16px;right:16px;background:#fff;border:1px solid #ccc;border-radius:6px;padding:8px;display:none;z-index:10;max-width:120px;display:grid;grid-template-columns:repeat(4,24px);grid-gap:4px}
- .swatch{width:19px;height:19px;border:1px solid #aaa;cursor:pointer}
- #clearBtn{position:absolute;right:16px;bottom:16px;width:40px;height:40px;border:none;border-radius:50%;background:#e74c3c;color:#fff;font-size:1.2rem;cursor:pointer;z-index:10}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BIG tumi‑isi × Matter.js</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: auto;
+      max-width: 480px;
+      padding: 16px;
+      background: #fafafa;
+      color: #333;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin: 0 0 12px;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .tabs2 {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .tab, .tab2 {
+      flex: 1;
+      text-align: center;
+      padding: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #fff;
+      font-size: 0.9rem;
+    }
+    .tab.active, .tab2.active {
+      background: #007aff;
+      color: #fff;
+      border-color: #007aff;
+    }
+    #simArea {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    #simCanvas {
+      display: block;
+    }
+    #kid {
+      position: absolute;
+      left: 20px;
+      bottom: 0px;
+      height: 120px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    #colorPanel {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px;
+      display: none;
+      z-index: 10;
+      max-width: 120px;
+      display: grid;
+      grid-template-columns: repeat(4, 24px);
+      grid-gap: 4px;
+    }
+    .swatch {
+      width: 19px;
+      height: 19px;
+      border: 1px solid #aaa;
+      cursor: pointer;
+    }
+    #clearBtn {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: #e74c3c;
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 10;
+    }
+  </style>
 </head>
 <body>
-<h1>BIG tumi‑isi ドロップ</h1>
-<div class="tabs">
-  <div class="tab" data-plan="S">PLAN S</div>
-  <div class="tab" data-plan="M">PLAN M</div>
-  <div class="tab" data-plan="L">PLAN L</div>
-</div>
-<div class="tabs2">
-  <div class="tab2" data-size="20">20㎤</div>
-  <div class="tab2" data-size="30">30㎤</div>
-  <div class="tab2" data-size="40">40㎤</div>
-  <div class="tab2" data-size="50">50㎤</div>
-  <div class="tab2" data-size="60">60㎤</div>
-</div>
-<div id="simArea">
-  <img src="kids.svg" id="kid" alt="kid">
-  <canvas id="simCanvas"></canvas>
-  <div id="colorPanel"></div>
-  <button id="clearBtn">×</button>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-<script>
-const plans={S:[{size:20,count:2},{size:30,count:2},{size:40,count:2}],M:[{size:20,count:2},{size:30,count:2},{size:40,count:2},{size:50,count:1},{size:60,count:1}],L:[{size:20,count:5},{size:30,count:5},{size:40,count:3},{size:50,count:2},{size:60,count:2}]};
-const colors=[
-  ['01 LEMON','#e6e137'],['02 YELLOW','#f5a623'],['03 MUSTARD','#d68f29'],['04 ORANGE','#f26522'],
-  ['05 RED','#cc3333'],['06 PINK','#e87ca2'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],
-  ['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['12 NAVY','#003468'],
-  ['13 MINT BLUE','#7ac4b8'],['14 PISTACHIO','#c9dca4'],['15 LIGHT GREEN','#cde146'],['16 GRASS GREEN','#617a3d'],
-  ['17 DARK GREEN','#4b5331'],['18 BEIGE','#bba38f'],['19 PALE BROWN','#886d55'],['20 BROWN','#5d3a21'],
-  ['21 CAMEL','#b47533'],['22 MID GREY','#9c9ba1'],['23 DARK GREY','#4f4f4f'],['24 PEARL WHITE','#dcd4c3'],
-  ['25 OFF WHITE','#f1eee9'],['26 WHITE','#ffffff'],['27 BLACK','#000000'],['28 AQUA','#7cc8b3'],
-  ['29 SKY','#6caee0'],['30 CANDY PINK','#e79ea0'],['31 ORANGE RED','#dd3526'],['32 LIME','#78ac3f']
-];
-const {Engine,Render,World,Bodies,Runner,Body,Mouse,MouseConstraint,Events,Composite,Query}=Matter;
-const W=430,H=300,engine=Engine.create();
-const render=Render.create({canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
-Render.run(render);Runner.run(Runner.create(),engine);
-// 壁非表示
-World.add(engine.world,[
-  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true,render:{visible:false}}),
-  Bodies.rectangle(-20,H/2,40,H,{isStatic:true,render:{visible:false}}),
-  Bodies.rectangle(W-80,H/2,40,H,{isStatic:true,render:{visible:false}})
-]);
-const mouse=Mouse.create(render.canvas);
-World.add(engine.world,MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}}));render.mouse=mouse;
-let activePlan=null;
-document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  tab.classList.add('active');activePlan=tab.dataset.plan;dropPlan();
-}));
-document.querySelectorAll('.tab2').forEach(tab=>tab.addEventListener('click',()=>{
-  document.querySelectorAll('.tab2').forEach(t=>t.classList.remove('active'));
-  tab.classList.add('active');const size=+tab.dataset.size;dropBlock(size,'#ccc');
-}));
-function dropPlan(){if(!activePlan) return;plans[activePlan].forEach(item=>{for(let i=0;i<item.count;i++)dropBlock(item.size,'#ccc');});}
-function randPoly(r,n){const v=[];const step=2*Math.PI/n;let a=Math.random()*step;for(let i=0;i<n;i++){const m=r*(0.8+Math.random()*0.4);v.push({x:Math.cos(a)*m,y:Math.sin(a)*m});a+=step;}return v;}
-const colorPanel=document.getElementById('colorPanel');let selBody=null;
-// パレット生成
-colors.forEach(([name,hex])=>{
-  const sw=document.createElement('div');sw.className='swatch';sw.title=name;sw.style.background=hex;
-  sw.addEventListener('click',()=>{if(selBody){selBody.render.fillStyle=hex;colorPanel.style.display='none';selBody=null;}});
-  colorPanel.appendChild(sw);
-});
-// クリック時パレット表示
-render.canvas.addEventListener('mousedown', evt => {
-  const rect = render.canvas.getBoundingClientRect();
-  const pos={x:evt.clientX-rect.left,y:evt.clientY-rect.top};
-  const found=Query.point(engine.world.bodies,pos).find(b=>!b.isStatic);
-  if(found){ selBody=found; colorPanel.style.display='grid'; }
-});
-// ドロップ幅狭め
-const dropWidth=200;function dropBlock(size,color){
-  const r=size*0.5; const x0=(W-dropWidth)/2;
-  const x=x0+Math.random()*dropWidth; const y=-40;
-  const sides= Math.random()<0.5?7:9;
-  const verts=randPoly(r,sides);
-  const body=Bodies.fromVertices(x,y,[verts],{restitution:0,friction:1,frictionStatic:1,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
-  Body.rotate(body,Math.random()*Math.PI);
-  World.add(engine.world,body);
-}
-// クリア
-document.getElementById('clearBtn').onclick=()=>{Composite.allBodies(engine.world).filter(b=>!b.isStatic).forEach(b=>World.remove(engine.world,b));};
-</script>
+  <h1>BIG tumi‑isi ドロップ</h1>
+  <div class="tabs">
+    <div class="tab" data-plan="S">PLAN S</div>
+    <div class="tab" data-plan="M">PLAN M</div>
+    <div class="tab" data-plan="L">PLAN L</div>
+  </div>
+  <div class="tabs2">
+    <div class="tab2" data-size="20">20㎤</div>
+    <div class="tab2" data-size="30">30㎤</div>
+    <div class="tab2" data-size="40">40㎤</div>
+    <div class="tab2" data-size="50">50㎤</div>
+    <div class="tab2" data-size="60">60㎤</div>
+  </div>
+  <div id="simArea">
+    <img src="kids.svg" id="kid" alt="kid">
+    <canvas id="simCanvas"></canvas>
+    <div id="colorPanel"></div>
+    <button id="clearBtn">×</button>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script>
+    const plans = {
+      S: [{ size: 20, count: 2 }, { size: 30, count: 2 }, { size: 40, count: 2 }],
+      M: [{ size: 20, count: 2 }, { size: 30, count: 2 }, { size: 40, count: 2 }, { size: 50, count: 1 }, { size: 60, count: 1 }],
+      L: [{ size: 20, count: 5 }, { size: 30, count: 5 }, { size: 40, count: 3 }, { size: 50, count: 2 }, { size: 60, count: 2 }]
+    };
+    const colors = [
+      ['01 LEMON', '#e6e137'], ['02 YELLOW', '#f5a623'], ['03 MUSTARD', '#d68f29'], ['04 ORANGE', '#f26522'],
+      ['05 RED', '#cc3333'], ['06 PINK', '#e87ca2'], ['07 VIOLET', '#a55c9a'], ['08 PURPLE', '#8463a3'],
+      ['09 LIGHT BLUE', '#2c9ab7'], ['10 INDIGO', '#1e4f91'], ['11 BLUE', '#005bab'], ['12 NAVY', '#003468'],
+      ['13 MINT BLUE', '#7ac4b8'], ['14 PISTACHIO', '#c9dca4'], ['15 LIGHT GREEN', '#cde146'], ['16 GRASS GREEN', '#617a3d'],
+      ['17 DARK GREEN', '#4b5331'], ['18 BEIGE', '#bba38f'], ['19 PALE BROWN', '#886d55'], ['20 BROWN', '#5d3a21'],
+      ['21 CAMEL', '#b47533'], ['22 MID GREY', '#9c9ba1'], ['23 DARK GREY', '#4f4f4f'], ['24 PEARL WHITE', '#dcd4c3'],
+      ['25 OFF WHITE', '#f1eee9'], ['26 WHITE', '#ffffff'], ['27 BLACK', '#000000'], ['28 AQUA', '#7cc8b3'],
+      ['29 SKY', '#6caee0'], ['30 CANDY PINK', '#e79ea0'], ['31 ORANGE RED', '#dd3526'], ['32 LIME', '#78ac3f']
+    ];
+    const { Engine, Render, World, Bodies, Runner, Body, Mouse, MouseConstraint, Events, Composite, Query } = Matter;
+    const W = 430, H = 300;
+    const engine = Engine.create();
+    const render = Render.create({
+      canvas: document.getElementById('simCanvas'),
+      engine,
+      options: { width: W, height: H, wireframes: false, background: '#fafafa' }
+    });
+    Render.run(render);
+    Runner.run(Runner.create(), engine);
+
+    // 壁（右壁をW-80に設定）
+    World.add(engine.world, [
+      Bodies.rectangle(W/2, H+20, W, 40, { isStatic: true, render: { visible: false } }),
+      Bodies.rectangle(-20, H/2, 40, H, { isStatic: true, render: { visible: false } }),
+      Bodies.rectangle(W-80, H/2, 40, H, { isStatic: true, render: { visible: false } })
+    ]);
+
+    const mouse = Mouse.create(render.canvas);
+    World.add(engine.world, MouseConstraint.create(engine, { mouse, constraint: { stiffness: 0.2, render: { visible: false } } }));
+    render.mouse = mouse;
+
+    let activePlan = null;
+    let currentColor = '#ccc'; // ドロップ時の色
+
+    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activePlan = tab.dataset.plan;
+      dropPlan();
+    }));
+
+    document.querySelectorAll('.tab2').forEach(tab => tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab2').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const size = +tab.dataset.size;
+      dropBlock(size, currentColor);
+    }));
+
+    function dropPlan() {
+      if (!activePlan) return;
+      plans[activePlan].forEach(item => {
+        for (let i = 0; i < item.count; i++) dropBlock(item.size, currentColor);
+      });
+    }
+
+    function randPoly(r, n) {
+      const v = [];
+      const step = 2 * Math.PI / n;
+      let a = Math.random() * step;
+      for (let i = 0; i < n; i++) {
+        const m = r * (0.8 + Math.random() * 0.4);
+        v.push({ x: Math.cos(a) * m, y: Math.sin(a) * m });
+        a += step;
+      }
+      return v;
+    }
+
+    const colorPanel = document.getElementById('colorPanel');
+    let selBody = null;
+
+    // スウォッチ生成＆カラー選択
+    colors.forEach(([name, hex]) => {
+      const sw = document.createElement('div');
+      sw.className = 'swatch';
+      sw.title = name;
+      sw.style.background = hex;
+      sw.addEventListener('click', () => {
+        if (selBody) {
+          selBody.render.fillStyle = hex;
+          selBody = null;
+          colorPanel.style.display = 'none';
+        } else {
+          currentColor = hex;
+          colorPanel.style.display = 'none';
+        }
+      });
+      colorPanel.appendChild(sw);
+    });
+
+    // ブロック選択（PC）
+    render.canvas.addEventListener('mousedown', evt => {
+      const rect = render.canvas.getBoundingClientRect();
+      const pos = { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+      const found = Query.point(engine.world.bodies, pos).find(b => !b.isStatic);
+      if (found) {
+        selBody = found;
+        colorPanel.style.display = 'grid';
+      }
+    });
+
+    // タッチ対応（スマホ）
+    render.canvas.addEventListener('touchstart', evt => {
+      const touch = evt.touches[0];
+      const rect = render.canvas.getBoundingClientRect();
+      const pos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+      const found = Query.point(engine.world.bodies, pos).find(b => !b.isStatic);
+      if (found) {
+        selBody = found;
+        colorPanel.style.display = 'grid';
+      }
+    });
+
+    // ドロップ幅とブロック生成
+    const dropWidth = 200;
+    function dropBlock(size, color) {
+      const r = size * 0.5;
+      const x0 = (W - dropWidth) / 2;
+      const x = x0 + Math.random() * dropWidth;
+      const y = -40;
+      const sides = Math.random() < 0.5 ? 7 : 9;
+      const verts = randPoly(r, sides);
+      const body = Bodies.fromVertices(x, y, [verts], {
+        restitution: 0,
+        friction: 1,
+        frictionStatic: 1,
+        density: 0.002,
+        render: { fillStyle: color, strokeStyle: '#000', lineWidth: 1 }
+      }, true);
+      Body.rotate(body, Math.random() * Math.PI);
+      World.add(engine.world, body);
+    }
+
+    // クリア
+    document.getElementById('clearBtn').onclick = () => {
+      Composite.allBodies(engine.world).filter(b => !b.isStatic).forEach(b => World.remove(engine.world, b));
+    };
+  </script>
 </body>
 </html>
