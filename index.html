@@ -31,7 +31,12 @@
   <div class="tab" data-plan="L">PLAN L</div>
 </div>
 <div class="tabs2">
-  <div class="tab2" data-size="20">20cm角</div>
+  <div class="tab2" data-size="20">20㎤</div>
+  <div class="tab2" data-size="30">30㎤</div>
+  <div class="tab2" data-size="40">40㎤</div>
+  <div class="tab2" data-size="50">50㎤</div>
+  <div class="tab2" data-size="60">60㎤</div>
+</div>
   <div class="tab2" data-size="30">30cm角</div>
   <div class="tab2" data-size="40">40cm角</div>
   <div class="tab2" data-size="50">50cm角</div>
@@ -63,7 +68,7 @@ const mouse=Mouse.create(render.canvas);World.add(engine.world,MouseConstraint.c
 // タブ操作
 let activePlan=null,activeSize=null;
 document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');activePlan=tab.dataset.plan;dropPlan();}));
-document.querySelectorAll('.tab2').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.tab2').forEach(t=>t.classList.remove('active'));tab.classList.add('active');activeSize=+tab.dataset.size;}));
+document.querySelectorAll('.tab2').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.tab2').forEach(t=>t.classList.remove('active'));tab.classList.add('active');const size=+tab.dataset.size;dropBlock(size,'#ccc');}));
 
 function dropPlan(){if(!activePlan) return;plans[activePlan].forEach(item=>{for(let i=0;i<item.count;i++)dropBlock(item.size,'#ccc');});}
 
@@ -74,7 +79,21 @@ function randPoly(r,n){const v=[];const step=2*Math.PI/n;let a=Math.random()*ste
 const colorPanel=document.getElementById('colorPanel'),colorSel=document.getElementById('blockColorSel');colors.forEach(c=>colorSel.add(new Option('',c)));
 document.getElementById('applyColorBtn').onclick=()=>{if(selBody){selBody.render.fillStyle=colorSel.value;selBody=null;colorPanel.style.display='none';}};
 let selBody=null;
-Events.on(engine,'mousedown',e=>{const found=Matter.Query.point(engine.world.bodies,e.mouse.position).find(b=>!b.isStatic);if(found){selBody=found;colorPanel.style.display='block';colorPanel.style.left=e.mouse.absolute.x+10+'px';colorPanel.style.top=e.mouse.absolute.y+10+'px';}});
+// ブロックをタップ（クリック）で色パネルを表示
+render.canvas.addEventListener('mousedown', function(evt) {
+  const rect = render.canvas.getBoundingClientRect();
+  const mousePos = { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+  // タップ位置のボディを取得
+  const bodies = Matter.Query.point(engine.world.bodies, mousePos);
+  const found = bodies.find(b => !b.isStatic);
+  if (found) {
+    selBody = found;
+    // パネルをタップ位置に表示
+    colorPanel.style.display = 'block';
+    colorPanel.style.left = (evt.clientX - rect.left + 10) + 'px';
+    colorPanel.style.top = (evt.clientY - rect.top + 10) + 'px';
+  }
+});;
 
 // ドロップ
 function dropBlock(size,color){const r=size*0.5;const dropWidth=W*0.6,x0=(W-dropWidth)/2;const x=x0+Math.random()*dropWidth,y=-40;const sides=Math.random()<0.5?7:9;const verts=randPoly(r,sides);const body=Bodies.fromVertices(x,y,[verts],{restitution:0,friction:1,frictionStatic:1,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);Body.rotate(body,Math.random()*Math.PI);World.add(engine.world,body);} 
