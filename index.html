@@ -7,7 +7,6 @@
 <style>
  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:auto;max-width:480px;padding:16px;background:#fafafa;color:#333;-webkit-font-smoothing:antialiased}
  h1{font-size:1.6rem;font-weight:700;margin:0 0 12px}
- /* プランおよびサイズタブ */
  .tabs{display:flex;gap:8px;margin-bottom:8px}
  .tabs2{display:flex;gap:4px;margin-bottom:12px}
  .tab,.tab2{flex:1;text-align:center;padding:6px 0;border:1px solid #ccc;border-radius:6px;cursor:pointer;background:#fff;font-size:0.9rem}
@@ -15,11 +14,8 @@
  #simArea{position:relative;width:100%;height:300px;margin-bottom:12px;border-radius:8px;overflow:hidden;background:#fff}
  #simCanvas{display:block}
  #kid{position:absolute;left:20px;bottom:20px;height:120px;pointer-events:none;z-index:5}
- /* カラーパネル */
  #colorPanel{position:absolute;top:16px;right:16px;background:#fff;border:1px solid #ccc;border-radius:6px;padding:8px;display:none;z-index:10}
- #colorPanel select{width:100%;margin-bottom:8px;padding:4px;font-size:0.9rem;border:1px solid #ccc;border-radius:4px}
- #colorPanel button{width:100%;padding:6px;background:#007aff;color:#fff;border:none;border-radius:4px}
- /* クリアボタン */
+ #applyColorBtn{width:100%;padding:6px;background:#007aff;color:#fff;border:none;border-radius:4px}
  #clearBtn{position:absolute;right:16px;bottom:16px;width:40px;height:40px;border:none;border-radius:50%;background:#e74c3c;color:#fff;font-size:1.2rem;cursor:pointer;z-index:10}
 </style>
 </head>
@@ -37,70 +33,71 @@
   <div class="tab2" data-size="50">50㎤</div>
   <div class="tab2" data-size="60">60㎤</div>
 </div>
-  <div class="tab2" data-size="30">30cm角</div>
-  <div class="tab2" data-size="40">40cm角</div>
-  <div class="tab2" data-size="50">50cm角</div>
-  <div class="tab2" data-size="60">60cm角</div>
-</div>
 <div id="simArea">
   <img src="kids.svg" id="kid" alt="kid">
   <canvas id="simCanvas"></canvas>
   <div id="colorPanel">
     <select id="blockColorSel"></select>
-    <button id="applyColorBtn">色を適用</button>
+    <button id="applyColorBtn">閉じる</button>
   </div>
   <button id="clearBtn">×</button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
-// プランごと落下設定
 const plans={S:[{size:20,count:2},{size:30,count:2},{size:40,count:2}],M:[{size:20,count:2},{size:30,count:2},{size:40,count:2},{size:50,count:1},{size:60,count:1}],L:[{size:20,count:5},{size:30,count:5},{size:40,count:3},{size:50,count:2},{size:60,count:2}]};
 const colors=['#e6e137','#f5a623','#d68f29','#f26522','#cc3333','#e87ca2','#a55c9a','#8463a3','#2c9ab7','#1e4f91','#005bab','#003468'];
-
-// Matter.js 初期化
-const {Engine,Render,World,Bodies,Runner,Body,Mouse,MouseConstraint,Events,Composite}=Matter;
+const {Engine,Render,World,Bodies,Runner,Body,Mouse,MouseConstraint,Events,Composite,Query}=Matter;
 const W=430,H=300,engine=Engine.create();
 const render=Render.create({canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
 Render.run(render);Runner.run(Runner.create(),engine);
-World.add(engine.world,[Bodies.rectangle(W/2,H+20,W,40,{isStatic:true,render:{visible:false}}),Bodies.rectangle(-20,H/2,40,H,{isStatic:true,render:{visible:false}}),Bodies.rectangle(W+20,H/2,40,H,{isStatic:true,render:{visible:false}}),Bodies.rectangle(70,H-60,110,140,{isStatic:true,render:{visible:false}})]);
-const mouse=Mouse.create(render.canvas);World.add(engine.world,MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}}));render.mouse=mouse;
+// 壁：非表示かつ不干渉
+World.add(engine.world,[
+  Bodies.rectangle(W/2,H+20,W,40,{isStatic:true,render:{visible:false}}),
+  Bodies.rectangle(-20,H/2,40,H,{isStatic:true,render:{visible:false}}),
+  Bodies.rectangle(W+20,H/2,40,H,{isStatic:true,render:{visible:false}}),
+  // kid領域のバリアなし→変更：削除または透明バリアなし
+]);
+const mouse=Mouse.create(render.canvas);
+World.add(engine.world,MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}}));render.mouse=mouse;
 
-// タブ操作
-let activePlan=null,activeSize=null;
-document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');activePlan=tab.dataset.plan;dropPlan();}));
-document.querySelectorAll('.tab2').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.tab2').forEach(t=>t.classList.remove('active'));tab.classList.add('active');const size=+tab.dataset.size;dropBlock(size,'#ccc');}));
-
+let activePlan=null;
+document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');activePlan=tab.dataset.plan;dropPlan();
+}));
+document.querySelectorAll('.tab2').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.tab2').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');const size=+tab.dataset.size;dropBlock(size,'#ccc');
+}));
 function dropPlan(){if(!activePlan) return;plans[activePlan].forEach(item=>{for(let i=0;i<item.count;i++)dropBlock(item.size,'#ccc');});}
-
-// ランダム凸多角形
 function randPoly(r,n){const v=[];const step=2*Math.PI/n;let a=Math.random()*step;for(let i=0;i<n;i++){const m=r*(0.8+Math.random()*0.4);v.push({x:Math.cos(a)*m,y:Math.sin(a)*m});a+=step;}return v;}
 
-// 色パネル
-const colorPanel=document.getElementById('colorPanel'),colorSel=document.getElementById('blockColorSel');colors.forEach(c=>colorSel.add(new Option('',c)));
+const colorPanel=document.getElementById('colorPanel'),colorSel=document.getElementById('blockColorSel');
+colors.forEach(c=>colorSel.add(new Option('',c)));
 document.getElementById('applyColorBtn').onclick=()=>{if(selBody){selBody.render.fillStyle=colorSel.value;selBody=null;colorPanel.style.display='none';}};
 let selBody=null;
-// ブロックをタップ（クリック）で色パネルを表示
 render.canvas.addEventListener('mousedown', function(evt) {
   const rect = render.canvas.getBoundingClientRect();
-  const mousePos = { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-  // タップ位置のボディを取得
-  const bodies = Matter.Query.point(engine.world.bodies, mousePos);
-  const found = bodies.find(b => !b.isStatic);
-  if (found) {
-    selBody = found;
-    // パネルをタップ位置に表示
-    colorPanel.style.display = 'block';
-    colorPanel.style.left = (evt.clientX - rect.left + 10) + 'px';
-    colorPanel.style.top = (evt.clientY - rect.top + 10) + 'px';
-  }
-});;
+  const pos={x:evt.clientX-rect.left,y:evt.clientY-rect.top};
+  const found=Query.point(engine.world.bodies,pos).find(b=>!b.isStatic);
+  if(found){ selBody=found;colorPanel.style.display='block';colorPanel.style.left=(pos.x+10)+'px';colorPanel.style.top=(pos.y+10)+'px'; }
+});
 
-// ドロップ
-function dropBlock(size,color){const r=size*0.5;const dropWidth=W*0.6,x0=(W-dropWidth)/2;const x=x0+Math.random()*dropWidth,y=-40;const sides=Math.random()<0.5?7:9;const verts=randPoly(r,sides);const body=Bodies.fromVertices(x,y,[verts],{restitution:0,friction:1,frictionStatic:1,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);Body.rotate(body,Math.random()*Math.PI);World.add(engine.world,body);} 
-
+// ドロップ幅狭める
+const dropWidth=200;
+function dropBlock(size,color){
+  const r=size*0.5;
+  const x0=(W-dropWidth)/2;
+  const x=x0+Math.random()*dropWidth;
+  const y=-40;
+  const sides=Math.random()<0.5?7:9;
+  const verts=randPoly(r,sides);
+  const body=Bodies.fromVertices(x,y,[verts],{restitution:0,friction:1,frictionStatic:1,density:0.002,render:{fillStyle:color,strokeStyle:'#000',lineWidth:1}},true);
+  Body.rotate(body,Math.random()*Math.PI);
+  World.add(engine.world,body);
+}
 // クリア
 document.getElementById('clearBtn').onclick=()=>{Composite.allBodies(engine.world).filter(b=>!b.isStatic).forEach(b=>World.remove(engine.world,b));};
-
 </script>
 </body>
 </html>
