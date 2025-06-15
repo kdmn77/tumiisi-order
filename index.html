@@ -28,9 +28,7 @@
       display:grid; grid-template-columns:repeat(4,24px); grid-gap:4px; max-width:120px;
     }
     .swatch { width:19px; height:19px; border:1px solid #aaa; cursor:pointer; }
-    #stats {
-      position:absolute; left:16px; bottom:-48px; font-size:14px; color:#333;
-    }
+    #stats { position:absolute; left:16px; bottom:-48px; font-size:14px; color:#333; }
     #blockList {
       position:absolute; left:16px; bottom:-160px; width:calc(100% - 32px);
       max-height:100px; overflow:auto; font-size:13px; line-height:1.4;
@@ -48,6 +46,7 @@
 </head>
 <body>
   <h1>BIG tumi-isi ドロップ</h1>
+
   <div class="color-tabs">
     <div class="tab3" data-color="RED">RED</div>
     <div class="tab3" data-color="BLUE">BLUE</div>
@@ -55,11 +54,13 @@
     <div class="tab3" data-color="YELLOW">YELLOW</div>
     <div class="tab3" data-color="MIX">MIX</div>
   </div>
+
   <div class="tabs">
     <div class="tab" data-plan="S">PLAN S</div>
     <div class="tab" data-plan="M">PLAN M</div>
     <div class="tab" data-plan="L">PLAN L</div>
   </div>
+
   <div class="tabs2">
     <div class="tab2" data-size="20">20㎤</div>
     <div class="tab2" data-size="30">30㎤</div>
@@ -67,12 +68,13 @@
     <div class="tab2" data-size="50">50㎤</div>
     <div class="tab2" data-size="60">60㎤</div>
   </div>
+
   <div id="simArea">
     <img src="kids.svg" id="kid" alt="kid">
     <canvas id="simCanvas"></canvas>
     <div id="colorPanel"></div>
     <button id="clearBtn">×</button>
-    <div id="stats">BLOCK: 0 ／ TOTAL: ¥0</div>
+    <div id="stats">個数: 0 ／ 合計金額: ¥0</div>
     <div id="blockList"></div>
     <button id="orderBtn">仮発注</button>
   </div>
@@ -81,93 +83,139 @@
   <script>
     const orderEmail = "your@example.com";
     const priceMap = {20:55000,30:80000,40:140000,50:200000,60:250000};
-    let blockCount=0, totalPrice=0;
-    const droppedBlocks=[];
-    const statsDiv=document.getElementById('stats');
-    const listDiv=document.getElementById('blockList');
+
+    let blockCount = 0, totalPrice = 0;
+    const droppedBlocks = [];
+    const statsDiv = document.getElementById('stats');
+    const listDiv = document.getElementById('blockList');
+
     function updateStats(){
-      statsDiv.textContent=`BLOCK: ${blockCount} ／ TOTAL: ¥${totalPrice.toLocaleString()}`;
-      listDiv.innerHTML=droppedBlocks.map((b,i)=>`${i+1}. ${b.size}㎤ - ${b.name}`).join("<br>");
+      statsDiv.textContent = `個数: ${blockCount} ／ 合計金額: ¥${totalPrice.toLocaleString()}`;
+      listDiv.innerHTML = droppedBlocks
+        .map((b,i)=>`${i+1}. ${b.size}㎤ - ${b.name}`)
+        .join("<br>");
     }
 
-    const plans={S:[{size:20,count:2},{size:30,count:2},{size:40,count:2}],M:[{size:20,count:2},{size:30,count:2},{size:40,count:2},{size:50,count:1},{size:60,count:1}],L:[{size:20,count:5},{size:30,count:5},{size:40,count:3},{size:50,count:2},{size:60,count:2}]};
-    const colors=[['05 RED','#cc3333'],['31 ORANGE RED','#dd3526'],['04 ORANGE','#f26522'],['30 CANDY PINK','#e79ea0'],['06 PINK','#e87ca2'],['09 LIGHT BLUE','#2c9ab7'],['10 INDIGO','#1e4f91'],['11 BLUE','#005bab'],['29 SKY','#6caee0'],['28 AQUA','#7cc8b3'],['13 MINT BLUE','#7ac4b8'],['12 NAVY','#003468'],['15 LIGHT GREEN','#cde146'],['16 GRASS GREEN','#617a3d'],['17 DARK GREEN','#4b5331'],['01 LEMON','#e6e137'],['02 YELLOW','#f5a623'],['03 MUSTARD','#d68f29'],['07 VIOLET','#a55c9a'],['08 PURPLE','#8463a3'],['14 PISTACHIO','#dcd4c3'],['32 LIME','#78ac3f'],['18 BEIGE','#bba38f'],['19 PALE BROWN','#886d55'],['20 BROWN','#5d3a21'],['21 CAMEL','#b47533'],['22 MID GREY','#9c9ba1'],['23 DARK GREY','#4f4f4f'],['24 PEARL WHITE','#dcd4c3'],['25 OFF WHITE','#f1eee9'],['26 WHITE','#ffffff'],['27 BLACK','#000000']];
-    const colorGroups={
-      RED:colors.filter(c=>c[0].includes('RED')),
-      BLUE:colors.filter(c=>['BLUE','INDIGO','AQUA','SKY','NAVY','MINT BLUE'].some(k=>c[0].includes(k))),
-      GREEN:colors.filter(c=>['GREEN','PISTACHIO','LIME'].some(k=>c[0].includes(k))),
-      YELLOW:colors.filter(c=>['YELLOW','LEMON','MUSTARD'].some(k=>c[0].includes(k))),
-      MIX:colors
+    const plans = {
+      S: [{size:20,count:2},{size:30,count:2},{size:40,count:2}],
+      M: [{size:20,count:2},{size:30,count:2},{size:40,count:2},{size:50,count:1},{size:60,count:1}],
+      L: [{size:20,count:5},{size:30,count:5},{size:40,count:3},{size:50,count:2},{size:60,count:2}]
     };
 
-    const {Engine,Render,World,Bodies,Runner,Body,Mouse,MouseConstraint,Composite,Query}=Matter;
-    const W=430,H=300;
-    const engine=Engine.create();
-    const render=Render.create({canvas:document.getElementById('simCanvas'),engine,options:{width:W,height:H,wireframes:false,background:'#fafafa'}});
-    Render.run(render);Runner.run(Runner.create(),engine);
-    World.add(engine.world,[Bodies.rectangle(W/2,H+20,W,40,{isStatic:true,render:{visible:false}}),Bodies.rectangle(-20,H/2,40,H,{isStatic:true,render:{visible:false}}),Bodies.rectangle(W-80,H/2,40,H,{isStatic:true,render:{visible:false}})]);
-    const mouse=Mouse.create(render.canvas);
-    World.add(engine.world,MouseConstraint.create(engine,{mouse,constraint:{stiffness:0.2,render:{visible:false}}}));
-    render.mouse=mouse;
+    const colors = [
+      ['01 LEMON','#e6e137'], ['02 YELLOW','#f5a623'], ['03 MUSTARD','#d68f29'],
+      ['04 ORANGE','#f26522'], ['05 RED','#cc3333'], ['06 PINK','#e87ca2'],
+      ['07 VIOLET','#a55c9a'], ['08 PURPLE','#8463a3'], ['09 LIGHT BLUE','#2c9ab7'],
+      ['10 INDIGO','#1e4f91'], ['11 BLUE','#005bab'], ['12 NAVY','#003468'],
+      ['13 MINT BLUE','#7ac4b8'], ['14 PISTACHIO','#dcd4c3'], ['15 LIGHT GREEN','#cde146'],
+      ['16 GRASS GREEN','#617a3d'], ['17 DARK GREEN','#4b5331'], ['18 BEIGE','#bba38f'],
+      ['19 PALE BROWN','#886d55'], ['20 BROWN','#5d3a21'], ['21 CAMEL','#b47533'],
+      ['22 MID GREY','#9c9ba1'], ['23 DARK GREY','#4f4f4f'], ['24 PEARL WHITE','#dcd4c3'],
+      ['25 OFF WHITE','#f1eee9'], ['26 WHITE','#ffffff'], ['27 BLACK','#000000'],
+      ['28 AQUA','#7cc8b3'], ['29 SKY','#6caee0'], ['30 CANDY PINK','#e79ea0'],
+      ['31 ORANGE RED','#dd3526'], ['32 LIME','#78ac3f']
+    ];
 
-    const colorPanel=document.getElementById('colorPanel');
-    let selBody=null;
+    const colorGroups = {
+      RED:    colors.filter(c=>c[0].includes('RED')),
+      BLUE:   colors.filter(c=>['BLUE','INDIGO','SKY','AQUA','NAVY','MINT BLUE'].some(k=>c[0].includes(k))),
+      GREEN:  colors.filter(c=>['GREEN','PISTACHIO','LIME'].some(k=>c[0].includes(k))),
+      YELLOW: colors.filter(c=>['YELLOW','LEMON','MUSTARD'].some(k=>c[0].includes(k))),
+      MIX:    colors
+    };
+
+    const {Engine, Render, World, Bodies, Runner, Body, Mouse, MouseConstraint, Composite, Query} = Matter;
+    const W = 430, H = 300;
+    const engine = Engine.create();
+    const render = Render.create({
+      canvas: document.getElementById('simCanvas'),
+      engine, options:{ width:W, height:H, wireframes:false, background:'#fafafa' }
+    });
+    Render.run(render);
+    Runner.run(Runner.create(), engine);
+
+    World.add(engine.world, [
+      Bodies.rectangle(W/2, H+20, W, 40, {isStatic:true, render:{visible:false}}),
+      Bodies.rectangle(-20, H/2, 40, H, {isStatic:true, render:{visible:false}}),
+      Bodies.rectangle(W-80, H/2, 40, H, {isStatic:true, render:{visible:false}})
+    ]);
+
+    const mouse = Mouse.create(render.canvas);
+    World.add(engine.world, MouseConstraint.create(engine, {mouse, constraint:{stiffness:0.2, render:{visible:false}}}));
+    render.mouse = mouse;
+
+    // パレット表示
+    const colorPanel = document.getElementById('colorPanel');
+    let selBody = null;
     colors.forEach(([name,hex])=>{
-      const sw=document.createElement('div');
-      sw.className='swatch';sw.title=name;sw.style.background=hex;
-      sw.addEventListener('click',()=>{
-        if(selBody){selBody.render.fillStyle=hex;selBody=null;}
+      const sw = document.createElement('div');
+      sw.className='swatch'; sw.title=name; sw.style.background=hex;
+      sw.addEventListener('click', ()=>{
+        if(selBody){ selBody.render.fillStyle=hex; selBody=null; }
         colorPanel.style.display='none';
       });
       colorPanel.appendChild(sw);
     });
-    render.canvas.addEventListener('mousedown',e=>{
+    render.canvas.addEventListener('mousedown', e=>{
       const r=render.canvas.getBoundingClientRect();
-      const pos={x:e.clientX-r.left,y:e.clientY-r.top};
+      const pos={x:e.clientX-r.left, y:e.clientY-r.top};
       const f=Query.point(engine.world.bodies,pos).find(b=>!b.isStatic);
-      if(f){selBody=f;colorPanel.style.display='grid';}
+      if(f){ selBody=f; colorPanel.style.display='grid'; }
     });
 
+    // タブ制御
     let selectedColorGroup='MIX';
     document.querySelectorAll('.tab3').forEach(t=>t.addEventListener('click',()=>{
       document.querySelectorAll('.tab3').forEach(x=>x.classList.remove('active'));
-      t.classList.add('active');selectedColorGroup=t.dataset.color;
+      t.classList.add('active'); selectedColorGroup=t.dataset.color;
     }));
     document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
       document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-      t.classList.add('active');plans[t.dataset.plan].forEach(item=>{for(let i=0;i<item.count;i++)dropBlock(item.size);});
+      t.classList.add('active');
+      plans[t.dataset.plan].forEach(item=>{ for(let i=0;i<item.count;i++) dropBlock(item.size); });
     }));
     document.querySelectorAll('.tab2').forEach(t=>t.addEventListener('click',()=>{
       document.querySelectorAll('.tab2').forEach(x=>x.classList.remove('active'));
-      t.classList.add('active');dropBlock(+t.dataset.size);
+      t.classList.add('active'); dropBlock(+t.dataset.size);
     }));
 
+    // 形状生成
     function randPoly(r,n){
-      const v=[];const step=2*Math.PI/n;let a=Math.random()*step;
-      for(let i=0;i<n;i++){const m=r*(0.8+Math.random()*0.4);v.push({x:Math.cos(a)*m,y:Math.sin(a)*m});a+=step;}
+      const v=[]; const step=2*Math.PI/n; let a=Math.random()*step;
+      for(let i=0;i<n;i++){ const m=r*(0.8+Math.random()*0.4); v.push({x:Math.cos(a)*m,y:Math.sin(a)*m}); a+=step; }
       return v;
     }
 
+    // ブロック落下
     function dropBlock(size){
-      const verts=randPoly(size*0.5,Math.random()<0.5?7:9);
-      const grp=colorGroups[selectedColorGroup];
-      const [name,hex]=grp[Math.floor(Math.random()*grp.length)];
-      const body=Bodies.fromVertices((W-200)/2+Math.random()*200,-40,[verts],{restitution:0,friction:1,density:0.002,render:{fillStyle:hex,strokeStyle:'#000',lineWidth:1}},true);
-      Body.rotate(body,Math.random()*Math.PI);World.add(engine.world,body);
-      blockCount++;totalPrice+=priceMap[size]||0;
-      droppedBlocks.push({size,name});updateStats();
+      const verts = randPoly(size*0.5, Math.random()<0.5?7:9);
+      const grp = colorGroups[selectedColorGroup];
+      const [name,hex] = grp[Math.floor(Math.random()*grp.length)];
+      const body = Bodies.fromVertices(
+        (W-200)/2 + Math.random()*200, -40, [verts],
+        {restitution:0, friction:1, density:0.002, render:{fillStyle:hex, strokeStyle:'#000', lineWidth:1}},
+        true
+      );
+      Body.rotate(body, Math.random()*Math.PI);
+      World.add(engine.world, body);
+      blockCount++;
+      totalPrice += priceMap[size]||0;
+      droppedBlocks.push({ size, name });
+      updateStats();
     }
 
-    document.getElementById('clearBtn').onclick=()=>{
+    // クリア
+    document.getElementById('clearBtn').onclick = ()=>{
       Composite.allBodies(engine.world).filter(b=>!b.isStatic).forEach(b=>World.remove(engine.world,b));
-      blockCount=0;totalPrice=0;droppedBlocks.length=0;updateStats();
+      blockCount=0; totalPrice=0; droppedBlocks.length=0; updateStats();
     };
 
-    document.getElementById('orderBtn').addEventListener('click',()=>{
-      const subject=encodeURIComponent("仮発注："+new Date().toLocaleString());
-      let body=`個数: ${blockCount}\n合計金額: ¥${totalPrice.toLocaleString()}\n\n詳細:\n`;
-      body+=droppedBlocks.map((b,i)=>`${i+1}. ${b.size}㎤ - ${b.name}`).join("\n");
-      window.location.href=`mailto:${orderEmail}?subject=${subject}&body=${encodeURIComponent(body)}`;
+    // 仮発注
+    document.getElementById('orderBtn').addEventListener('click', ()=>{
+      const subject = encodeURIComponent("仮発注：" + new Date().toLocaleString());
+      let body = `個数: ${blockCount}\n合計金額: ¥${totalPrice.toLocaleString()}\n\n詳細:\n`;
+      body += droppedBlocks.map((b,i)=>`${i+1}. ${b.size}㎤ - ${b.name}`).join("\n");
+      window.location.href = `mailto:${orderEmail}?subject=${subject}&body=${encodeURIComponent(body)}`;
     });
 
     updateStats();
