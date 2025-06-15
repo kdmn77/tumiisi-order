@@ -77,15 +77,15 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
   <script>
-    // 上代マップ
-    const priceMap = {20:55000,30:80000,40:140000,50:200000,60:250000};
+    // サイズごとの上代を設定
+    const priceMap = { 20:55000, 30:80000, 40:140000, 50:200000, 60:250000 };
+
     let blockCount = 0, totalPrice = 0;
     const statsDiv = document.getElementById('stats');
     function updateStats() {
       statsDiv.textContent = `個数: ${blockCount} ／ 合計金額: ¥${totalPrice.toLocaleString()}`;
     }
 
-    // プラン・カラー定義
     const plans = {
       S: [{size:20,count:2},{size:30,count:2},{size:40,count:2}],
       M: [{size:20,count:2},{size:30,count:2},{size:40,count:2},{size:50,count:1},{size:60,count:1}],
@@ -112,120 +112,84 @@
       MIX:    colors
     };
 
-    // Matter.js セットアップ
     const { Engine, Render, World, Bodies, Runner, Body, Mouse, MouseConstraint, Composite, Query } = Matter;
     const W = 430, H = 300;
     const engine = Engine.create();
     const render = Render.create({
       canvas: document.getElementById('simCanvas'),
-      engine,
-      options: { width: W, height: H, wireframes: false, background: '#fafafa' }
+      engine, options:{ width:W, height:H, wireframes:false, background:'#fafafa' }
     });
     Render.run(render);
     Runner.run(Runner.create(), engine);
 
     World.add(engine.world, [
-      Bodies.rectangle(W/2, H+20, W, 40, { isStatic: true, render: { visible: false } }),
-      Bodies.rectangle(-20, H/2, 40, H, { isStatic: true, render: { visible: false } }),
-      Bodies.rectangle(W-80, H/2, 40, H, { isStatic: true, render: { visible: false } })
+      Bodies.rectangle(W/2,H+20,W,40,{ isStatic:true, render:{ visible:false } }),
+      Bodies.rectangle(-20,H/2,40,H,{ isStatic:true, render:{ visible:false } }),
+      Bodies.rectangle(W-80,H/2,40,H,{ isStatic:true, render:{ visible:false } })
     ]);
 
     const mouse = Mouse.create(render.canvas);
-    World.add(engine.world, MouseConstraint.create(engine, {
-      mouse, constraint: { stiffness: 0.2, render: { visible: false } }
-    }));
+    World.add(engine.world,MouseConstraint.create(engine,{ mouse, constraint:{ stiffness:0.2, render:{ visible:false } } }));
     render.mouse = mouse;
 
-    // カラーパレット復活
+    // カラーパレット生成
     const colorPanel = document.getElementById('colorPanel');
     let selBody = null;
-    colors.forEach(([name, hex]) => {
+    colors.forEach(([name,hex])=>{
       const sw = document.createElement('div');
-      sw.className = 'swatch';
-      sw.title = name;
-      sw.style.background = hex;
-      sw.addEventListener('click', () => {
-        if (selBody) {
-          selBody.render.fillStyle = hex;
-          selBody = null;
-        }
-        colorPanel.style.display = 'none';
+      sw.className='swatch'; sw.title=name; sw.style.background=hex;
+      sw.addEventListener('click',()=>{
+        if(selBody){ selBody.render.fillStyle=hex; selBody=null; }
+        colorPanel.style.display='none';
       });
       colorPanel.appendChild(sw);
     });
-    render.canvas.addEventListener('mousedown', evt => {
-      const rect = render.canvas.getBoundingClientRect();
-      const pos = { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-      const found = Query.point(engine.world.bodies, pos).find(b => !b.isStatic);
-      if (found) {
-        selBody = found;
-        colorPanel.style.display = 'grid';
-      }
+    render.canvas.addEventListener('mousedown',evt=>{
+      const rect=render.canvas.getBoundingClientRect();
+      const pos={ x:evt.clientX-rect.left, y:evt.clientY-rect.top };
+      const found=Query.point(engine.world.bodies,pos).find(b=>!b.isStatic);
+      if(found){ selBody=found; colorPanel.style.display='grid'; }
     });
-    render.canvas.addEventListener('touchstart', evt => {
-      const touch = evt.touches[0];
-      const rect = render.canvas.getBoundingClientRect();
-      const pos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-      const found = Query.point(engine.world.bodies, pos).find(b => !b.isStatic);
-      if (found) {
-        selBody = found;
-        colorPanel.style.display = 'grid';
-      }
+    render.canvas.addEventListener('touchstart',evt=>{
+      const touch=evt.touches[0]; const rect=render.canvas.getBoundingClientRect();
+      const pos={ x:touch.clientX-rect.left, y:touch.clientY-rect.top };
+      const found=Query.point(engine.world.bodies,pos).find(b=>!b.isStatic);
+      if(found){ selBody=found; colorPanel.style.display='grid'; }
     });
 
-    // タブ処理
-    let selectedColorGroup = 'MIX';
-    document.querySelectorAll('.tab3').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab3').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        selectedColorGroup = tab.dataset.color;
-      });
-    });
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        plans[tab.dataset.plan].forEach(item => {
-          for (let i = 0; i < item.count; i++) dropBlock(item.size);
-        });
-      });
-    });
-    document.querySelectorAll('.tab2').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab2').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        dropBlock(+tab.dataset.size);
-      });
-    });
+    let selectedColorGroup='MIX';
+    document.querySelectorAll('.tab3').forEach(tab=>tab.addEventListener('click',()=>{
+      document.querySelectorAll('.tab3').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      selectedColorGroup=tab.dataset.color;
+    }));
+    document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      plans[tab.dataset.plan].forEach(item=>{for(let i=0;i<item.count;i++)dropBlock(item.size);});
+    }));
+    document.querySelectorAll('.tab2').forEach(tab=>tab.addEventListener('click',()=>{
+      document.querySelectorAll('.tab2').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      dropBlock(+tab.dataset.size);
+    }));
 
-    // 多角形生成
-    function randPoly(r, n) {
-      const v = [];
-      const step = 2 * Math.PI / n;
-      let a = Math.random() * step;
-      for (let i = 0; i < n; i++) {
-        const m = r * (0.8 + Math.random() * 0.4);
-        v.push({ x: Math.cos(a) * m, y: Math.sin(a) * m });
-        a += step;
-      }
+    function randPoly(r,n){
+      const v=[]; const step=2*Math.PI/n; let a=Math.random()*step;
+      for(let i=0;i<n;i++){ const m=r*(0.8+Math.random()*0.4); v.push({x:Math.cos(a)*m,y:Math.sin(a)*m}); a+=step; }
       return v;
     }
 
-    // ブロック落下
-    function dropBlock(size) {
-      const verts = randPoly(size * 0.5, Math.random() < 0.5 ? 7 : 9);
-      const group = colorGroups[selectedColorGroup];
-      const hex = group[Math.floor(Math.random() * group.length)][1];
-      const body = Bodies.fromVertices(
-        (W - 200) / 2 + Math.random() * 200,
-        -40,
-        [verts],
-        { restitution: 0, friction: 1, density: 0.002, render: { fillStyle: hex, strokeStyle: '#000', lineWidth: 1 } },
+    function dropBlock(size){
+      const verts=randPoly(size*0.5,Math.random()<0.5?7:9);
+      const group=colorGroups[selectedColorGroup];
+      const hex=group[Math.floor(Math.random()*group.length)][1];
+      const body=Bodies.fromVertices((W-200)/2+Math.random()*200,-40,[verts],
+        { restitution:0, friction:1, density:0.002, render:{ fillStyle:hex, strokeStyle:'#000', lineWidth:1 } },
         true
       );
-      Body.rotate(body, Math.random() * Math.PI);
-      World.add(engine.world, body);
+      Body.rotate(body,Math.random()*Math.PI);
+      World.add(engine.world,body);
 
       // 統計更新
       blockCount++;
@@ -233,13 +197,11 @@
       updateStats();
     }
 
-    // クリア
-    document.getElementById('clearBtn').onclick = () => {
-      Composite.allBodies(engine.world).filter(b => !b.isStatic).forEach(b => World.remove(engine.world, b));
-      blockCount = 0; totalPrice = 0; updateStats();
+    document.getElementById('clearBtn').onclick=()=>{
+      Composite.allBodies(engine.world).filter(b=>!b.isStatic).forEach(b=>World.remove(engine.world,b));
+      blockCount=0; totalPrice=0; updateStats();
     };
 
-    // 初期表示
     updateStats();
   </script>
 </body>
